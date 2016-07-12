@@ -3,28 +3,51 @@ package co.crazytech.ggqr.ui;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
+
 import java.awt.BorderLayout;
+
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+
 import javax.swing.JSpinner;
 import javax.swing.JComboBox;
 import javax.swing.SwingConstants;
 import javax.swing.JList;
+
 import java.awt.Canvas;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+
+import org.geonames.Toponym;
+import org.geonames.ToponymSearchCriteria;
+import org.geonames.ToponymSearchResult;
+import org.geonames.WebService;
+
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -53,7 +76,6 @@ public class Main {
 			}
 		});
 	}
-
 	/**
 	 * Create the application.
 	 */
@@ -70,6 +92,7 @@ public class Main {
 		frmGaharuGadingQr.setBounds(100, 100, 450, 300);
 		frmGaharuGadingQr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmGaharuGadingQr.getContentPane().setLayout(new BorderLayout(0, 0));
+		
 		
 		mapCountry = new HashMap<>();
 		mapCountry.put(1, "Malaysia");
@@ -126,7 +149,7 @@ public class Main {
 		
 		JLabel lblType = new JLabel("Type");
 		GridBagConstraints gbc_lblType = new GridBagConstraints();
-		gbc_lblType.anchor = GridBagConstraints.EAST;
+		gbc_lblType.anchor = GridBagConstraints.WEST;
 		gbc_lblType.insets = new Insets(0, 0, 5, 5);
 		gbc_lblType.gridx = 0;
 		gbc_lblType.gridy = 2;
@@ -151,6 +174,7 @@ public class Main {
 		panelLeft.add(lblSize, gbc_lblSize);
 		
 		comboBoxSize = new JComboBox();
+		comboBoxSize.setEnabled(false);
 		GridBagConstraints gbc_comboBoxSize = new GridBagConstraints();
 		gbc_comboBoxSize.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBoxSize.fill = GridBagConstraints.HORIZONTAL;
@@ -165,7 +189,7 @@ public class Main {
 		comboBoxSize.addItem("500x500");
 		comboBoxSize.addItem("550x550");
 		comboBoxSize.addItem("600x600");
-		comboBoxSize.setSelectedIndex(0);
+		comboBoxSize.setSelectedIndex(2);
 		panelLeft.add(comboBoxSize, gbc_comboBoxSize);
 		
 		JLabel lblFarm = new JLabel("Farm");
@@ -246,7 +270,6 @@ public class Main {
 		});
 		panelCenter.add(btnGenerate, BorderLayout.SOUTH);
 	}
-	
 	private void generate(){
 		Runnable runnable = new Runnable(){
 
@@ -276,25 +299,25 @@ public class Main {
 							break;
 						}
 					}
-					
-					for (int i = propCode; i < (new Integer(textFieldQty.getText().toString())+propCode); i++) {
+					Integer qty = new Integer(textFieldQty.getText().toString())+propCode;
+					System.out.println(qty);
+					for (int i = propCode; i < qty; i++) {
 						String data = countryCode+"_"+String.format("%03d", farmCode)+"_"+String.format("%04d", farmCode)+"_"+type+String.format("%07d", propCode);
-						URL url = new URL("http://phpmysql-crazytechco.rhcloud.com/QRLogo.php?data="+data+"&size="+comboBoxSize.getSelectedItem().toString()+"&logo=logo.png");
-						InputStream in = new BufferedInputStream(url.openStream());
-						ByteArrayOutputStream out = new ByteArrayOutputStream();
-						byte[] buf = new byte[1024];
-						int n = 0;
-						while (-1!=(n=in.read(buf)))
-						{
-							out.write(buf, 0, n);
-						}
-						out.close();
-						in.close();
-						byte[] response = out.toByteArray();
+						URL url = new URL("http://phpmysql-crazytechco.rhcloud.com/QRLogo.php?data="+data+"&size=300x300&logo=logo.png");
+						BufferedImage image = ImageIO.read(url);
+						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+						BufferedImage altered = config.createCompatibleImage(image.getWidth()+80, image.getHeight());
+						Graphics2D rect = altered.createGraphics();
+						rect.setColor(Color.WHITE);
+						rect.fillRect(0, 0, 80, altered.getHeight());
+						rect.drawImage(image, 80, 0, null);
+						rect.setFont(rect.getFont().deriveFont(Font.BOLD,80f));
+						rect.setColor(Color.BLACK);
+						rect.rotate(Math.toRadians(-90));
+						rect.drawString(type+propCode, -image.getHeight()+12, 80);
+						rect.dispose();
 						
-						FileOutputStream fos = new FileOutputStream(data+".png");
-						fos.write(response);
-						fos.close();
+						ImageIO.write(altered, "png", new File(data+".png"));
 						propCode+=1;
 					}
 				} catch (MalformedURLException e) {
