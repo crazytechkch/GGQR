@@ -7,10 +7,14 @@ import javax.swing.JFrame;
 import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -23,11 +27,16 @@ import java.awt.Insets;
 import javax.swing.JSpinner;
 import javax.swing.JComboBox;
 import javax.swing.SwingConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.JList;
 
 import java.awt.Canvas;
 
 import javax.imageio.ImageIO;
+import javax.net.ssl.ExtendedSSLSession;
+import javax.swing.DefaultListModel;
+import javax.swing.GrayFilter;
 import javax.swing.JButton;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -53,6 +62,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.awt.event.ActionEvent;
+import javax.swing.JEditorPane;
 
 public class Main {
 
@@ -61,6 +71,8 @@ public class Main {
 	private JList<String> listCodes;
 	private JComboBox<String> comboBoxType,comboBoxSize,comboBoxFarm,comboBoxCountry,comboBoxRegion;
 	private Map<Integer, String> mapCountry,mapRegion,mapFarm;	
+	private JTextField textFieldStartId;
+	private String selectedImageName;
 	/**
 	 * Launch the application.
 	 */
@@ -92,6 +104,7 @@ public class Main {
 		frmGaharuGadingQr.setBounds(100, 100, 450, 300);
 		frmGaharuGadingQr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmGaharuGadingQr.getContentPane().setLayout(new BorderLayout(0, 0));
+		frmGaharuGadingQr.setSize(new Dimension(640, 400));
 		
 		
 		mapCountry = new HashMap<>();
@@ -112,7 +125,7 @@ public class Main {
 		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		panelLeft.setLayout(gbl_panelLeft);
 		
-		JLabel lblLastId = new JLabel("Last ID");
+		JLabel lblLastId = new JLabel("Start ID");
 		GridBagConstraints gbc_lblLastId = new GridBagConstraints();
 		gbc_lblLastId.anchor = GridBagConstraints.WEST;
 		gbc_lblLastId.insets = new Insets(0, 0, 5, 5);
@@ -120,13 +133,17 @@ public class Main {
 		gbc_lblLastId.gridy = 0;
 		panelLeft.add(lblLastId, gbc_lblLastId);
 		
-		JLabel lblId = new JLabel("ID");
-		GridBagConstraints gbc_lblId = new GridBagConstraints();
-		gbc_lblId.anchor = GridBagConstraints.WEST;
-		gbc_lblId.insets = new Insets(0, 0, 5, 0);
-		gbc_lblId.gridx = 1;
-		gbc_lblId.gridy = 0;
-		panelLeft.add(lblId, gbc_lblId);
+		textFieldStartId = new JTextField();
+		textFieldStartId.setHorizontalAlignment(SwingConstants.RIGHT);
+		textFieldStartId.setText("1");
+		GridBagConstraints gbc_textFieldStartId = new GridBagConstraints();
+		gbc_textFieldStartId.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textFieldStartId.anchor = GridBagConstraints.EAST;
+		gbc_textFieldStartId.insets = new Insets(0, 0, 5, 0);
+		gbc_textFieldStartId.gridx = 1;
+		gbc_textFieldStartId.gridy = 0;
+		panelLeft.add(textFieldStartId, gbc_textFieldStartId);
+		textFieldStartId.setColumns(10);
 		
 		JLabel lblQuantity = new JLabel("Quantity");
 		GridBagConstraints gbc_lblQuantity = new GridBagConstraints();
@@ -140,6 +157,7 @@ public class Main {
 		textFieldQty.setHorizontalAlignment(SwingConstants.RIGHT);
 		textFieldQty.setText("1");
 		GridBagConstraints gbc_textFieldQty = new GridBagConstraints();
+		gbc_textFieldQty.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textFieldQty.insets = new Insets(0, 0, 5, 0);
 		gbc_textFieldQty.anchor = GridBagConstraints.NORTHEAST;
 		gbc_textFieldQty.gridx = 1;
@@ -250,13 +268,16 @@ public class Main {
 		}
 		panelLeft.add(comboBoxRegion, gbc_comboBoxRegion);
 		
-		listCodes = new JList();
+		JScrollPane scrollPaneList = new JScrollPane();
+		listCodes = new JList(new DefaultListModel<String>());
+		scrollPaneList.setViewportView(listCodes);
 		GridBagConstraints gbc_list_codes = new GridBagConstraints();
 		gbc_list_codes.gridwidth = 2;
 		gbc_list_codes.fill = GridBagConstraints.BOTH;
 		gbc_list_codes.gridx = 0;
 		gbc_list_codes.gridy = 7;
-		panelLeft.add(listCodes, gbc_list_codes);
+		panelLeft.add(scrollPaneList, gbc_list_codes);
+		
 		
 		JPanel panelCenter = new JPanel();
 		frmGaharuGadingQr.getContentPane().add(panelCenter, BorderLayout.CENTER);
@@ -269,18 +290,45 @@ public class Main {
 			}
 		});
 		panelCenter.add(btnGenerate, BorderLayout.SOUTH);
+		
+		JPanel panelImage = new JPanel();
+		panelCenter.add(panelImage, BorderLayout.CENTER);
+		panelImage.setLayout(new BorderLayout(0, 0));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		panelImage.add(scrollPane, BorderLayout.CENTER);
+		
+		JEditorPane editorPane = new JEditorPane();
+		scrollPane.setViewportView(editorPane);
+		
+		listCodes.addListSelectionListener(new ListSelectionListener() {
+			
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				ListModel<String> lm = listCodes.getModel();
+				String selected = lm.getElementAt(listCodes.getSelectedIndex());
+				editorPane.setContentType("text/html");
+				try {
+					URL url = new File("D:/development/java/GGQR/tempqr/"+selected+".png").toURI().toURL();
+					editorPane.setText("<html><img src='"+url+"' width=380 height=300></img></html>");
+				} catch (MalformedURLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
 	}
 	private void generate(){
-		Runnable runnable = new Runnable(){
-
+		Thread thread = new Thread(){
 			@Override
 			public void run() {
+				// TODO Auto-generated method stub
 				try {
-					Integer countryCode,regionCode,farmCode,propCode;
+					Integer countryCode,regionCode,farmCode;
 					String type = "T";
 					if(comboBoxType.getSelectedItem().toString().equals("Bee"))type="B";
 					if(comboBoxType.getSelectedItem().toString().equals("Tree"))type="T";
-					countryCode = 1;regionCode=1;farmCode=1;propCode=1;
+					countryCode = 1;regionCode=1;farmCode=1;
 					for (Integer key : mapFarm.keySet()) {
 						if(mapCountry.get(key)==comboBoxFarm.getSelectedItem().toString()){
 							farmCode = key;
@@ -299,10 +347,11 @@ public class Main {
 							break;
 						}
 					}
-					Integer qty = new Integer(textFieldQty.getText().toString())+propCode;
-					System.out.println(qty);
-					for (int i = propCode; i < qty; i++) {
-						String data = countryCode+"_"+String.format("%03d", farmCode)+"_"+String.format("%04d", farmCode)+"_"+type+String.format("%07d", propCode);
+					Integer startId = new Integer(textFieldStartId.getText().toString());
+					Integer qty = new Integer(textFieldQty.getText().toString());
+					DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
+					for (int i = startId; i < qty+startId; i++) {
+						String data = countryCode+"_"+String.format("%03d", farmCode)+"_"+String.format("%04d", farmCode)+"_"+type+String.format("%07d", i);
 						URL url = new URL("http://phpmysql-crazytechco.rhcloud.com/QRLogo.php?data="+data+"&size=300x300&logo=logo.png");
 						BufferedImage image = ImageIO.read(url);
 						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
@@ -314,11 +363,11 @@ public class Main {
 						rect.setFont(rect.getFont().deriveFont(Font.BOLD,80f));
 						rect.setColor(Color.BLACK);
 						rect.rotate(Math.toRadians(-90));
-						rect.drawString(type+propCode, -image.getHeight()+12, 80);
+						rect.drawString(type+i, -image.getHeight()+12, 80);
 						rect.dispose();
 						
-						ImageIO.write(altered, "png", new File(data+".png"));
-						propCode+=1;
+						ImageIO.write(altered, "png", new File("tempqr/"+data+".png"));
+						lm.addElement(data);
 					}
 				} catch (MalformedURLException e) {
 					// TODO Auto-generated catch block
@@ -328,8 +377,9 @@ public class Main {
 					e.printStackTrace();
 				}
 			}
-			
 		};
-		runnable.run();
+		thread.start();
 	}
+	
+	
 }
