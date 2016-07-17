@@ -73,6 +73,8 @@ public class Main {
 	private Map<Integer, String> mapCountry,mapRegion,mapFarm;	
 	private JTextField textFieldStartId;
 	private String selectedImageName;
+	private String qrDir;
+	
 	/**
 	 * Launch the application.
 	 */
@@ -99,6 +101,8 @@ public class Main {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		if(!new File("tempqr").exists())new File("tempqr").mkdirs();
+		qrDir = new File("tempqr").getAbsolutePath();
 		frmGaharuGadingQr = new JFrame();
 		frmGaharuGadingQr.setTitle("Gaharu Gading QR Generator");
 		frmGaharuGadingQr.setBounds(100, 100, 450, 300);
@@ -309,7 +313,7 @@ public class Main {
 				String selected = lm.getElementAt(listCodes.getSelectedIndex());
 				editorPane.setContentType("text/html");
 				try {
-					URL url = new File("D:/development/java/GGQR/tempqr/"+selected+".png").toURI().toURL();
+					URL url = new File(qrDir+"/"+selected+".png").toURI().toURL();
 					editorPane.setText("<html><img src='"+url+"' width=380 height=300></img></html>");
 				} catch (MalformedURLException e1) {
 					// TODO Auto-generated catch block
@@ -365,8 +369,7 @@ public class Main {
 						rect.rotate(Math.toRadians(-90));
 						rect.drawString(type+i, -image.getHeight()+12, 80);
 						rect.dispose();
-						
-						ImageIO.write(altered, "png", new File("tempqr/"+data+".png"));
+						ImageIO.write(altered, "png", new File(qrDir+"/"+data+".png"));
 						lm.addElement(data);
 					}
 				} catch (MalformedURLException e) {
