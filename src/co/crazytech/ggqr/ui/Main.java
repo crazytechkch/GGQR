@@ -74,6 +74,7 @@ public class Main {
 	private JTextField textFieldStartId;
 	private String selectedImageName;
 	private String qrDir;
+	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
 	
 	/**
 	 * Launch the application.
@@ -356,7 +357,7 @@ public class Main {
 					DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
 					for (int i = startId; i < qty+startId; i++) {
 						String data = countryCode+"_"+String.format("%03d", farmCode)+"_"+String.format("%04d", farmCode)+"_"+type+String.format("%07d", i);
-						URL url = new URL("http://phpmysql-crazytechco.rhcloud.com/QRLogo.php?data="+data+"&size=300x300&logo=logo.png");
+						URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
 						BufferedImage image = ImageIO.read(url);
 						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 						BufferedImage altered = config.createCompatibleImage(image.getWidth()+80, image.getHeight());
