@@ -27,6 +27,7 @@ import java.awt.Insets;
 import javax.swing.JSpinner;
 import javax.swing.JComboBox;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.JList;
@@ -47,8 +48,11 @@ import org.geonames.Toponym;
 import org.geonames.ToponymSearchCriteria;
 import org.geonames.ToponymSearchResult;
 import org.geonames.WebService;
+import org.jdom.output.Format;
 
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -59,22 +63,26 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.awt.event.ActionEvent;
 import javax.swing.JEditorPane;
+import javax.swing.JFormattedTextField;
+
+import java.awt.GridLayout;
+import java.awt.FlowLayout;
 
 public class Main {
 
 	private JFrame frmGaharuGadingQr;
-	private JTextField textFieldQty;
 	private JList<String> listCodes;
-	private JComboBox<String> comboBoxType,comboBoxSize,comboBoxFarm,comboBoxCountry,comboBoxRegion;
+	private JComboBox<String> comboBoxType,comboBoxSize,comboBoxFarm,comboBoxColumn;
 	private Map<Integer, String> mapCountry,mapRegion,mapFarm;	
-	private JTextField textFieldStartId;
 	private String selectedImageName;
 	private String qrDir;
 	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
+	private JFormattedTextField textFieldStart,textFieldEnd;
 	
 	/**
 	 * Launch the application.
@@ -125,76 +133,20 @@ public class Main {
 		frmGaharuGadingQr.getContentPane().add(panelLeft, BorderLayout.WEST);
 		GridBagLayout gbl_panelLeft = new GridBagLayout();
 		gbl_panelLeft.columnWidths = new int[]{42, 86, 0};
-		gbl_panelLeft.rowHeights = new int[]{0, 20, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panelLeft.rowHeights = new int[]{0, 20, 0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_panelLeft.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		panelLeft.setLayout(gbl_panelLeft);
-		
-		JLabel lblLastId = new JLabel("Start ID");
-		GridBagConstraints gbc_lblLastId = new GridBagConstraints();
-		gbc_lblLastId.anchor = GridBagConstraints.WEST;
-		gbc_lblLastId.insets = new Insets(0, 0, 5, 5);
-		gbc_lblLastId.gridx = 0;
-		gbc_lblLastId.gridy = 0;
-		panelLeft.add(lblLastId, gbc_lblLastId);
-		
-		textFieldStartId = new JTextField();
-		textFieldStartId.setHorizontalAlignment(SwingConstants.RIGHT);
-		textFieldStartId.setText("1");
-		GridBagConstraints gbc_textFieldStartId = new GridBagConstraints();
-		gbc_textFieldStartId.fill = GridBagConstraints.HORIZONTAL;
-		gbc_textFieldStartId.anchor = GridBagConstraints.EAST;
-		gbc_textFieldStartId.insets = new Insets(0, 0, 5, 0);
-		gbc_textFieldStartId.gridx = 1;
-		gbc_textFieldStartId.gridy = 0;
-		panelLeft.add(textFieldStartId, gbc_textFieldStartId);
-		textFieldStartId.setColumns(10);
-		
-		JLabel lblQuantity = new JLabel("Quantity");
-		GridBagConstraints gbc_lblQuantity = new GridBagConstraints();
-		gbc_lblQuantity.anchor = GridBagConstraints.WEST;
-		gbc_lblQuantity.insets = new Insets(0, 0, 5, 5);
-		gbc_lblQuantity.gridx = 0;
-		gbc_lblQuantity.gridy = 1;
-		panelLeft.add(lblQuantity, gbc_lblQuantity);
-		
-		textFieldQty = new JTextField();
-		textFieldQty.setHorizontalAlignment(SwingConstants.RIGHT);
-		textFieldQty.setText("1");
-		GridBagConstraints gbc_textFieldQty = new GridBagConstraints();
-		gbc_textFieldQty.fill = GridBagConstraints.HORIZONTAL;
-		gbc_textFieldQty.insets = new Insets(0, 0, 5, 0);
-		gbc_textFieldQty.anchor = GridBagConstraints.NORTHEAST;
-		gbc_textFieldQty.gridx = 1;
-		gbc_textFieldQty.gridy = 1;
-		panelLeft.add(textFieldQty, gbc_textFieldQty);
-		textFieldQty.setColumns(10);
-		
-		JLabel lblType = new JLabel("Type");
-		GridBagConstraints gbc_lblType = new GridBagConstraints();
-		gbc_lblType.anchor = GridBagConstraints.WEST;
-		gbc_lblType.insets = new Insets(0, 0, 5, 5);
-		gbc_lblType.gridx = 0;
-		gbc_lblType.gridy = 2;
-		panelLeft.add(lblType, gbc_lblType);
 		
 		comboBoxType = new JComboBox();
 		GridBagConstraints gbc_comboBoxType = new GridBagConstraints();
-		gbc_comboBoxType.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBoxType.insets = new Insets(0, 0, 5, 5);
 		gbc_comboBoxType.fill = GridBagConstraints.HORIZONTAL;
-		gbc_comboBoxType.gridx = 1;
-		gbc_comboBoxType.gridy = 2;
+		gbc_comboBoxType.gridx = 0;
+		gbc_comboBoxType.gridy = 0;
 		comboBoxType.addItem("Bee");
 		comboBoxType.addItem("Tree");
 		panelLeft.add(comboBoxType, gbc_comboBoxType);
-		
-		JLabel lblSize = new JLabel("Size");
-		GridBagConstraints gbc_lblSize = new GridBagConstraints();
-		gbc_lblSize.anchor = GridBagConstraints.WEST;
-		gbc_lblSize.insets = new Insets(0, 0, 5, 5);
-		gbc_lblSize.gridx = 0;
-		gbc_lblSize.gridy = 3;
-		panelLeft.add(lblSize, gbc_lblSize);
 		
 		comboBoxSize = new JComboBox();
 		comboBoxSize.setEnabled(false);
@@ -202,7 +154,7 @@ public class Main {
 		gbc_comboBoxSize.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBoxSize.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxSize.gridx = 1;
-		gbc_comboBoxSize.gridy = 3;
+		gbc_comboBoxSize.gridy = 0;
 		comboBoxSize.addItem("200x200");
 		comboBoxSize.addItem("250x250");
 		comboBoxSize.addItem("300x300");
@@ -215,63 +167,55 @@ public class Main {
 		comboBoxSize.setSelectedIndex(2);
 		panelLeft.add(comboBoxSize, gbc_comboBoxSize);
 		
-		JLabel lblFarm = new JLabel("Farm");
-		lblFarm.setHorizontalAlignment(SwingConstants.LEFT);
-		GridBagConstraints gbc_lblFarm = new GridBagConstraints();
-		gbc_lblFarm.anchor = GridBagConstraints.WEST;
-		gbc_lblFarm.insets = new Insets(0, 0, 5, 5);
-		gbc_lblFarm.gridx = 0;
-		gbc_lblFarm.gridy = 4;
-		panelLeft.add(lblFarm, gbc_lblFarm);
-		
 		comboBoxFarm = new JComboBox();
 		GridBagConstraints gbc_comboBoxFarm = new GridBagConstraints();
+		gbc_comboBoxFarm.gridwidth = 2;
 		gbc_comboBoxFarm.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBoxFarm.fill = GridBagConstraints.HORIZONTAL;
-		gbc_comboBoxFarm.gridx = 1;
-		gbc_comboBoxFarm.gridy = 4;
+		gbc_comboBoxFarm.gridx = 0;
+		gbc_comboBoxFarm.gridy = 1;
+		panelLeft.add(comboBoxFarm, gbc_comboBoxFarm);
 		for (String value : mapFarm.values()) {
 			comboBoxFarm.addItem(value);
 		}
-		panelLeft.add(comboBoxFarm, gbc_comboBoxFarm);
 		
-		JLabel lblCountry = new JLabel("Country");
-		GridBagConstraints gbc_lblCountry = new GridBagConstraints();
-		gbc_lblCountry.anchor = GridBagConstraints.WEST;
-		gbc_lblCountry.insets = new Insets(0, 0, 5, 5);
-		gbc_lblCountry.gridx = 0;
-		gbc_lblCountry.gridy = 5;
-		panelLeft.add(lblCountry, gbc_lblCountry);
+		JScrollPane scrollPane_1 = new JScrollPane();
+		GridBagConstraints gbc_scrollPane_1 = new GridBagConstraints();
+		gbc_scrollPane_1.gridheight = 5;
+		gbc_scrollPane_1.gridwidth = 2;
+		gbc_scrollPane_1.insets = new Insets(0, 0, 5, 0);
+		gbc_scrollPane_1.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane_1.gridx = 0;
+		gbc_scrollPane_1.gridy = 2;
+		panelLeft.add(scrollPane_1, gbc_scrollPane_1);
 		
-		comboBoxCountry = new JComboBox();
-		GridBagConstraints gbc_comboBoxCountry = new GridBagConstraints();
-		gbc_comboBoxCountry.insets = new Insets(0, 0, 5, 0);
-		gbc_comboBoxCountry.fill = GridBagConstraints.HORIZONTAL;
-		gbc_comboBoxCountry.gridx = 1;
-		gbc_comboBoxCountry.gridy = 5;
-		for (String value : mapCountry.values()) {
-			comboBoxCountry.addItem(value);
-		}
-		panelLeft.add(comboBoxCountry, gbc_comboBoxCountry);
+		JPanel rangeParentPanel = new JPanel();
+		scrollPane_1.setViewportView(rangeParentPanel);
+		rangeParentPanel.setLayout(new GridLayout(1, 0, 0, 0));
+		rangeParentPanel.add(rangePanel());
 		
-		JLabel lblRegion = new JLabel("Region");
-		GridBagConstraints gbc_lblRegion = new GridBagConstraints();
-		gbc_lblRegion.anchor = GridBagConstraints.WEST;
-		gbc_lblRegion.insets = new Insets(0, 0, 5, 5);
-		gbc_lblRegion.gridx = 0;
-		gbc_lblRegion.gridy = 6;
-		panelLeft.add(lblRegion, gbc_lblRegion);
 		
-		comboBoxRegion = new JComboBox();
-		GridBagConstraints gbc_comboBoxRegion = new GridBagConstraints();
-		gbc_comboBoxRegion.insets = new Insets(0, 0, 5, 0);
-		gbc_comboBoxRegion.fill = GridBagConstraints.HORIZONTAL;
-		gbc_comboBoxRegion.gridx = 1;
-		gbc_comboBoxRegion.gridy = 6;
-		for (String value : mapRegion.values()) {
-			comboBoxRegion.addItem(value);
-		}
-		panelLeft.add(comboBoxRegion, gbc_comboBoxRegion);
+		JButton btnAddRange = new JButton("ADD RANGE");
+		GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
+		gbc_btnNewButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnNewButton.gridwidth = 2;
+		gbc_btnNewButton.insets = new Insets(0, 0, 5, 5);
+		gbc_btnNewButton.gridx = 0;
+		gbc_btnNewButton.gridy = 7;
+		btnAddRange.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				GridLayout layout = (GridLayout)rangeParentPanel.getLayout();
+				int row = layout.getRows()+1;
+				rangeParentPanel.setLayout(new GridLayout(row, 0, 0, 0));
+				rangeParentPanel.add(rangePanel());
+				rangeParentPanel.validate();
+				rangeParentPanel.repaint();
+				scrollPane_1.validate();
+			}
+		});
+		panelLeft.add(btnAddRange, gbc_btnNewButton);
 		
 		JScrollPane scrollPaneList = new JScrollPane();
 		listCodes = new JList(new DefaultListModel<String>());
@@ -280,7 +224,7 @@ public class Main {
 		gbc_list_codes.gridwidth = 2;
 		gbc_list_codes.fill = GridBagConstraints.BOTH;
 		gbc_list_codes.gridx = 0;
-		gbc_list_codes.gridy = 7;
+		gbc_list_codes.gridy = 8;
 		panelLeft.add(scrollPaneList, gbc_list_codes);
 		
 		
@@ -323,6 +267,96 @@ public class Main {
 			}
 		});
 	}
+	
+	private JPanel rangePanel() {
+		JPanel panelRange = new JPanel();
+		GridBagLayout gbl_panelRange = new GridBagLayout();
+		gbl_panelRange.columnWidths = new int[] {0, 30, 30, 30};
+		gbl_panelRange.rowHeights = new int[]{23, 0};
+		gbl_panelRange.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0};
+		gbl_panelRange.rowWeights = new double[]{0.0, Double.MIN_VALUE};
+		panelRange.setLayout(gbl_panelRange);
+		comboBoxColumn = new JComboBox();
+		for(char alphabet = 'A'; alphabet <= 'Z';alphabet++) {
+			comboBoxColumn.addItem(alphabet+"");
+		}
+		GridBagConstraints gbc_comboBoxColumn = new GridBagConstraints();
+		gbc_comboBoxColumn.fill = GridBagConstraints.BOTH;
+		gbc_comboBoxColumn.anchor = GridBagConstraints.WEST;
+		gbc_comboBoxColumn.insets = new Insets(0, 0, 0, 5);
+		gbc_comboBoxColumn.gridx = 0;
+		gbc_comboBoxColumn.gridy = 0;
+		panelRange.add(comboBoxColumn, gbc_comboBoxColumn);
+		
+		textFieldStart = new JFormattedTextField(NumberFormat.getNumberInstance());
+		textFieldStart.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_textFieldStart = new GridBagConstraints();
+		gbc_textFieldStart.fill = GridBagConstraints.BOTH;
+		gbc_textFieldStart.anchor = GridBagConstraints.WEST;
+		gbc_textFieldStart.insets = new Insets(0, 0, 0, 5);
+		gbc_textFieldStart.gridx = 1;
+		gbc_textFieldStart.gridy = 0;
+		panelRange.add(textFieldStart, gbc_textFieldStart);
+		textFieldStart.setColumns(5);
+		textFieldStart.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				SwingUtilities.invokeLater(new Runnable() {
+		            @Override
+		            public void run() {
+		                textFieldStart.selectAll();
+		            }
+		        });
+			}
+		});
+		
+		textFieldEnd = new JFormattedTextField(NumberFormat.getNumberInstance());
+		textFieldEnd.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_textFieldEnd = new GridBagConstraints();
+		gbc_textFieldEnd.fill = GridBagConstraints.BOTH;
+		gbc_textFieldEnd.anchor = GridBagConstraints.WEST;
+		gbc_textFieldEnd.insets = new Insets(0, 0, 0, 5);
+		gbc_textFieldEnd.gridx = 2;
+		gbc_textFieldEnd.gridy = 0;
+		panelRange.add(textFieldEnd, gbc_textFieldEnd);
+		textFieldEnd.setColumns(5);
+		textFieldEnd.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				SwingUtilities.invokeLater(new Runnable() {
+		            @Override
+		            public void run() {
+		                textFieldEnd.selectAll();
+		            }
+		        });
+			}
+		});
+		
+		JButton btnX = new JButton("X");
+		GridBagConstraints gbc_btnX = new GridBagConstraints();
+		gbc_btnX.fill = GridBagConstraints.BOTH;
+		gbc_btnX.insets = new Insets(0, 0, 0, 5);
+		gbc_btnX.anchor = GridBagConstraints.NORTHWEST;
+		gbc_btnX.gridx = 3;
+		gbc_btnX.gridy = 0;
+		panelRange.add(btnX, gbc_btnX);
+		
+		return panelRange;
+	}
 	private void generate(){
 		Thread thread = new Thread(){
 			@Override
@@ -333,6 +367,7 @@ public class Main {
 					String type = "T";
 					if(comboBoxType.getSelectedItem().toString().equals("Bee"))type="B";
 					if(comboBoxType.getSelectedItem().toString().equals("Tree"))type="T";
+					String col= comboBoxColumn.getSelectedItem().toString();
 					countryCode = 1;regionCode=1;farmCode=1;
 					for (Integer key : mapFarm.keySet()) {
 						if(mapCountry.get(key)==comboBoxFarm.getSelectedItem().toString()){
@@ -340,23 +375,11 @@ public class Main {
 							break;
 						}
 					}
-					for (Integer key : mapCountry.keySet()) {
-						if(mapCountry.get(key)==comboBoxCountry.getSelectedItem().toString()){
-							countryCode = key;
-							break;
-						}
-					}
-					for (Integer key : mapRegion.keySet()) {
-						if(mapRegion.get(key)==comboBoxRegion.getSelectedItem().toString()){
-							regionCode = key;
-							break;
-						}
-					}
-					Integer startId = new Integer(textFieldStartId.getText().toString());
-					Integer qty = new Integer(textFieldQty.getText().toString());
+					Integer startId = new Integer(textFieldStart.getText().toString());
+					Integer qty = new Integer(textFieldEnd.getText().toString());
 					DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
 					for (int i = startId; i < qty+startId; i++) {
-						String data = countryCode+"_"+String.format("%03d", farmCode)+"_"+String.format("%04d", farmCode)+"_"+type+String.format("%07d", i);
+						String data = countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+col+"_"+String.format("%d", i);
 						URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
 						BufferedImage image = ImageIO.read(url);
 						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
@@ -368,7 +391,10 @@ public class Main {
 						rect.setFont(rect.getFont().deriveFont(Font.BOLD,80f));
 						rect.setColor(Color.BLACK);
 						rect.rotate(Math.toRadians(-90));
-						rect.drawString(type+i, -image.getHeight()+12, 80);
+						rect.drawString(col+i, -image.getHeight()+12, 80);
+						rect.rotate(Math.toRadians(90));
+						rect.setFont(rect.getFont().deriveFont(Font.PLAIN,20f));
+						rect.drawString("HIVE", 100, image.getHeight());
 						rect.dispose();
 						ImageIO.write(altered, "png", new File(qrDir+"/"+data+".png"));
 						lm.addElement(data);
