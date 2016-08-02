@@ -83,7 +83,7 @@ public class Main {
 	private String qrDir;
 	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
 	private JFormattedTextField textFieldStart,textFieldEnd;
-	
+	JPanel rangeParentPanel;
 	/**
 	 * Launch the application.
 	 */
@@ -189,7 +189,7 @@ public class Main {
 		gbc_scrollPane_1.gridy = 2;
 		panelLeft.add(scrollPane_1, gbc_scrollPane_1);
 		
-		JPanel rangeParentPanel = new JPanel();
+		rangeParentPanel = new JPanel();
 		scrollPane_1.setViewportView(rangeParentPanel);
 		rangeParentPanel.setLayout(new GridLayout(1, 0, 0, 0));
 		rangeParentPanel.add(rangePanel());
@@ -353,6 +353,16 @@ public class Main {
 		gbc_btnX.anchor = GridBagConstraints.NORTHWEST;
 		gbc_btnX.gridx = 3;
 		gbc_btnX.gridy = 0;
+		btnX.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				rangeParentPanel.remove(panelRange);
+				rangeParentPanel.validate();
+				rangeParentPanel.repaint();
+			}
+		});
 		panelRange.add(btnX, gbc_btnX);
 		
 		return panelRange;
