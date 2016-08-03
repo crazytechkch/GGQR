@@ -486,6 +486,7 @@ public class Main {
 						int rowStart = new Integer(((JTextField)rangePanel.getComponent(1)).getText().toString());
 						int rowEnd = new Integer(((JTextField)rangePanel.getComponent(2)).getText().toString());
 						DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
+						JScrollPane scrollPane = (JScrollPane)rangePanel.getComponent(4);
 						for (int j = rowStart; j <= rowEnd; j++) {
 							
 							String data = countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
