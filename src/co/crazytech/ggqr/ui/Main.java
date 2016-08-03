@@ -397,8 +397,12 @@ public class Main {
 				int row = layout.getRows()+1;
 				panel.setLayout(new GridLayout(row, 0, 0, 0));
 				String col = comboBoxColumn.getSelectedItem().toString();
+				if (textFieldStart.getText().isEmpty()||textFieldEnd.getText().isEmpty())return;
 				Integer rowStart = new  Integer(textFieldStart.getText());
 				Integer rowEnd = new  Integer(textFieldEnd.getText());
+				int componentCount = panel.getComponentCount();
+				int count = rowEnd - rowStart;
+				if(componentCount>count) return;
 				panel.add(nicknamePanel(panel,col,rowStart,rowEnd));
 				panel.validate();
 				panel.repaint();
@@ -483,6 +487,7 @@ public class Main {
 						int rowEnd = new Integer(((JTextField)rangePanel.getComponent(2)).getText().toString());
 						DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
 						for (int j = rowStart; j <= rowEnd; j++) {
+							
 							String data = countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
 							URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
 							BufferedImage image = ImageIO.read(url);
