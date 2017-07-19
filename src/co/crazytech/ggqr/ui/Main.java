@@ -489,7 +489,8 @@ public class Main {
 						JScrollPane scrollPane = (JScrollPane)rangePanel.getComponent(4);
 						for (int j = rowStart; j <= rowEnd; j++) {
 							
-							String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
+							//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
+							String data = "GG"+"AB"+"ABC"+"AbC1";
 							URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
 							BufferedImage image = ImageIO.read(url);
 							GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
