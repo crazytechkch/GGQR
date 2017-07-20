@@ -32,46 +32,37 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.JList;
 
-import java.awt.Canvas;
-
 import javax.imageio.ImageIO;
-import javax.net.ssl.ExtendedSSLSession;
 import javax.swing.DefaultListModel;
-import javax.swing.GrayFilter;
 import javax.swing.JButton;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 
-import org.geonames.Toponym;
-import org.geonames.ToponymSearchCriteria;
-import org.geonames.ToponymSearchResult;
-import org.geonames.WebService;
-import org.jdom.output.Format;
+import co.crazytech.commons.json.JsonParser;
+import co.crazytech.commons.util.RandomCharacters;
 
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.awt.event.ActionEvent;
 import javax.swing.JEditorPane;
 import javax.swing.JFormattedTextField;
 
 import java.awt.GridLayout;
-import java.awt.FlowLayout;
 
 public class Main {
 
@@ -82,6 +73,7 @@ public class Main {
 	private String selectedImageName;
 	private String qrDir;
 	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
+	private static final String GG_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/gga/";
 	private JPanel rangeParentPanel;
 	private JFormattedTextField textFieldStart,textFieldEnd;
 	/**
@@ -144,8 +136,9 @@ public class Main {
 		gbc_comboBoxType.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxType.gridx = 0;
 		gbc_comboBoxType.gridy = 0;
-		comboBoxType.addItem("Bee");
-		comboBoxType.addItem("Tree");
+		for (GGObject obj : getProdTypes()) {
+			comboBoxType.addItem(obj.getName()+":"+obj.getCode());
+		}
 		panelLeft.add(comboBoxType, gbc_comboBoxType);
 		
 		comboBoxSize = new JComboBox();
@@ -175,47 +168,40 @@ public class Main {
 		gbc_comboBoxFarm.gridx = 0;
 		gbc_comboBoxFarm.gridy = 1;
 		panelLeft.add(comboBoxFarm, gbc_comboBoxFarm);
-		for (String value : mapFarm.values()) {
-			comboBoxFarm.addItem(value);
+		for (GGObject obj : getFarms()) {
+			comboBoxFarm.addItem(obj.getName()+":"+obj.getCode());
 		}
 		
-		JScrollPane scrollPane_1 = new JScrollPane();
-		GridBagConstraints gbc_scrollPane_1 = new GridBagConstraints();
-		gbc_scrollPane_1.gridheight = 5;
-		gbc_scrollPane_1.gridwidth = 2;
-		gbc_scrollPane_1.insets = new Insets(0, 0, 5, 0);
-		gbc_scrollPane_1.fill = GridBagConstraints.BOTH;
-		gbc_scrollPane_1.gridx = 0;
-		gbc_scrollPane_1.gridy = 2;
-		panelLeft.add(scrollPane_1, gbc_scrollPane_1);
-		
-		rangeParentPanel = new JPanel();
-		scrollPane_1.setViewportView(rangeParentPanel);
-		rangeParentPanel.setLayout(new GridLayout(1, 0, 0, 0));
-		rangeParentPanel.add(rangePanel());
-		
-		
-		JButton btnAddRange = new JButton("ADD RANGE");
-		GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
-		gbc_btnNewButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_btnNewButton.gridwidth = 2;
-		gbc_btnNewButton.insets = new Insets(0, 0, 5, 5);
-		gbc_btnNewButton.gridx = 0;
-		gbc_btnNewButton.gridy = 7;
-		btnAddRange.addActionListener(new ActionListener() {
+		textFieldStart = new JFormattedTextField(NumberFormat.getNumberInstance());
+		textFieldStart.setHorizontalAlignment(SwingConstants.RIGHT);
+		textFieldStart.setColumns(5);
+		textFieldStart.addFocusListener(new FocusListener() {
 			
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				GridLayout layout = (GridLayout)rangeParentPanel.getLayout();
-				int row = layout.getRows()+1;
-				rangeParentPanel.setLayout(new GridLayout(row, 0, 0, 0));
-				rangeParentPanel.add(rangePanel());
-				rangeParentPanel.validate();
-				rangeParentPanel.repaint();
-				scrollPane_1.validate();
+			public void focusLost(FocusEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				SwingUtilities.invokeLater(new Runnable() {
+		            @Override
+		            public void run() {
+		                textFieldStart.selectAll();
+		            }
+		        });
 			}
 		});
-		panelLeft.add(btnAddRange, gbc_btnNewButton);
+		textFieldStart.setText("1");
+		GridBagConstraints gbc_textFieldStart = new GridBagConstraints();
+		gbc_textFieldStart.gridheight = 5;
+		gbc_textFieldStart.gridwidth = 2;
+		gbc_textFieldStart.insets = new Insets(0, 0, 5, 0);
+		gbc_textFieldStart.fill = GridBagConstraints.BOTH;
+		gbc_textFieldStart.gridx = 0;
+		gbc_textFieldStart.gridy = 2;
+		panelLeft.add(textFieldStart, gbc_textFieldStart);
 		
 		JScrollPane scrollPaneList = new JScrollPane();
 		listCodes = new JList(new DefaultListModel<String>());
@@ -258,7 +244,7 @@ public class Main {
 				String selected = lm.getElementAt(listCodes.getSelectedIndex());
 				editorPane.setContentType("text/html");
 				try {
-					URL url = new File(qrDir+"/"+selected+".png").toURI().toURL();
+					URL url = new File(qrDir+"/"+selected.substring(2, 4)+"/"+selected+".png").toURI().toURL();
 					editorPane.setText("<html><img src='"+url+"' width=380 height=300></img></html>");
 				} catch (MalformedURLException e1) {
 					// TODO Auto-generated catch block
@@ -268,250 +254,54 @@ public class Main {
 		});
 	}
 	
-	private JPanel rangePanel() {
-		JPanel panelRange = new JPanel();
-		GridBagLayout gbl_panelRange = new GridBagLayout();
-		gbl_panelRange.rowWeights = new double[]{0.0, 1.0, 0.0};
-		gbl_panelRange.columnWeights = new double[]{1.0, 0.0, 0.0, 0.0, 0.0};
-		gbl_panelRange.columnWidths = new int[] {0,30, 30, 30,30};
-		gbl_panelRange.rowHeights = new int[] {0, 0, 20, 30};
-		panelRange.setLayout(gbl_panelRange);
-		comboBoxColumn = new JComboBox<String>();
-		for(char alphabet = 'A'; alphabet <= 'Z';alphabet++) {
-			comboBoxColumn.addItem(alphabet+"");
-		}
-		GridBagConstraints gbc_comboBoxColumn = new GridBagConstraints();
-		gbc_comboBoxColumn.fill = GridBagConstraints.BOTH;
-		gbc_comboBoxColumn.anchor = GridBagConstraints.WEST;
-		gbc_comboBoxColumn.insets = new Insets(0, 0, 5, 5);
-		gbc_comboBoxColumn.gridx = 0;
-		gbc_comboBoxColumn.gridy = 0;
-		panelRange.add(comboBoxColumn, gbc_comboBoxColumn);
-		
-		textFieldStart = new JFormattedTextField(NumberFormat.getNumberInstance());
-		textFieldStart.setHorizontalAlignment(SwingConstants.RIGHT);
-		GridBagConstraints gbc_textFieldStart = new GridBagConstraints();
-		gbc_textFieldStart.fill = GridBagConstraints.BOTH;
-		gbc_textFieldStart.anchor = GridBagConstraints.WEST;
-		gbc_textFieldStart.insets = new Insets(0, 0, 5, 5);
-		gbc_textFieldStart.gridx = 1;
-		gbc_textFieldStart.gridy = 0;
-		panelRange.add(textFieldStart, gbc_textFieldStart);
-		textFieldStart.setColumns(5);
-		textFieldStart.addFocusListener(new FocusListener() {
-			
-			@Override
-			public void focusLost(FocusEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void focusGained(FocusEvent e) {
-				SwingUtilities.invokeLater(new Runnable() {
-		            @Override
-		            public void run() {
-		                textFieldStart.selectAll();
-		            }
-		        });
-			}
-		});
-		
-		textFieldEnd = new JFormattedTextField(NumberFormat.getNumberInstance());
-		textFieldEnd.setHorizontalAlignment(SwingConstants.RIGHT);
-		GridBagConstraints gbc_textFieldEnd = new GridBagConstraints();
-		gbc_textFieldEnd.fill = GridBagConstraints.BOTH;
-		gbc_textFieldEnd.anchor = GridBagConstraints.WEST;
-		gbc_textFieldEnd.insets = new Insets(0, 0, 5, 5);
-		gbc_textFieldEnd.gridx = 2;
-		gbc_textFieldEnd.gridy = 0;
-		panelRange.add(textFieldEnd, gbc_textFieldEnd);
-		textFieldEnd.setColumns(5);
-		textFieldEnd.addFocusListener(new FocusListener() {
-			
-			@Override
-			public void focusLost(FocusEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void focusGained(FocusEvent e) {
-				SwingUtilities.invokeLater(new Runnable() {
-		            @Override
-		            public void run() {
-		                textFieldEnd.selectAll();
-		            }
-		        });
-			}
-		});
-		
-		JButton btnX = new JButton("X");
-		GridBagConstraints gbc_btnX = new GridBagConstraints();
-		gbc_btnX.insets = new Insets(0, 0, 5, 5);
-		gbc_btnX.fill = GridBagConstraints.BOTH;
-		gbc_btnX.anchor = GridBagConstraints.NORTHWEST;
-		gbc_btnX.gridx = 3;
-		gbc_btnX.gridy = 0;
-		btnX.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				rangeParentPanel.remove(panelRange);
-				rangeParentPanel.validate();
-				rangeParentPanel.repaint();
-			}
-		});
-		panelRange.add(btnX, gbc_btnX);
-		
-		JScrollPane scrollPaneNickname = new JScrollPane();
-		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
-		gbc_scrollPane.gridwidth = 4;
-		gbc_scrollPane.insets = new Insets(0, 0, 5, 5);
-		gbc_scrollPane.fill = GridBagConstraints.BOTH;
-		gbc_scrollPane.gridx = 0;
-		gbc_scrollPane.gridy = 1;
-		panelRange.add(scrollPaneNickname, gbc_scrollPane);
-		
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(1, 0, 0, 0));
-		scrollPaneNickname.setViewportView(panel);
-		
-		JButton btnAddNickname = new JButton("ADD NICKNAME");
-		GridBagConstraints gbcBtnAddNickname = new GridBagConstraints();
-		gbcBtnAddNickname.insets = new Insets(3, 3, 5, 5);
-		gbcBtnAddNickname.fill = GridBagConstraints.HORIZONTAL;
-		gbcBtnAddNickname.gridwidth = 4;
-		gbcBtnAddNickname.gridx = 0;
-		gbcBtnAddNickname.gridy = 2;
-		panelRange.add(btnAddNickname, gbcBtnAddNickname);
-		
-		
-		
-		btnAddNickname.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				GridLayout layout = (GridLayout)panel.getLayout(); 
-				int row = layout.getRows()+1;
-				panel.setLayout(new GridLayout(row, 0, 0, 0));
-				String col = comboBoxColumn.getSelectedItem().toString();
-				if (textFieldStart.getText().isEmpty()||textFieldEnd.getText().isEmpty())return;
-				Integer rowStart = new  Integer(textFieldStart.getText());
-				Integer rowEnd = new  Integer(textFieldEnd.getText());
-				int componentCount = panel.getComponentCount();
-				int count = rowEnd - rowStart;
-				if(componentCount>count) return;
-				panel.add(nicknamePanel(panel,col,rowStart,rowEnd));
-				panel.validate();
-				panel.repaint();
-				scrollPaneNickname.validate();
-				scrollPaneNickname.repaint();
-			}
-		});
-		return panelRange;
-	}
-	
-	private JPanel nicknamePanel(JPanel panel,String col, int rowStart, int rowEnd){
-		JPanel nicknamePanel = new JPanel();
-		GridBagLayout gblNickname = new GridBagLayout();
-		gblNickname.columnWidths = new int[] {60,60,30};
-		gblNickname.rowHeights = new int[] {0, 0};
-		nicknamePanel.setLayout(gblNickname);
-		JComboBox<String> comboBoxColRow = new JComboBox<String>();
-		for (int i=rowStart;i<=rowEnd;i++){
-			comboBoxColRow.addItem(col+i);
-		}
-		GridBagConstraints gbcCbColRow = new GridBagConstraints();
-		gbcCbColRow.insets = new Insets(0, 0, 5, 5);
-		gbcCbColRow.fill = GridBagConstraints.BOTH;
-		gbcCbColRow.anchor = GridBagConstraints.NORTHWEST;
-		gbcCbColRow.gridx = 0;
-		gbcCbColRow.gridy = 0;
-		nicknamePanel.add(comboBoxColRow,gbcCbColRow);
-		
-		JTextField tfNickname = new JTextField();
-		GridBagConstraints gbcTfNickname = new GridBagConstraints();
-		gbcTfNickname.insets = new Insets(0, 0, 5, 5);
-		gbcTfNickname.fill = GridBagConstraints.BOTH;
-		gbcTfNickname.anchor = GridBagConstraints.NORTHWEST;
-		gbcTfNickname.gridx = 1;
-		gbcTfNickname.gridy = 0;
-		nicknamePanel.add(tfNickname,gbcTfNickname);
-		tfNickname.setColumns(10);
-		
-		JButton btnX = new JButton("X");
-		GridBagConstraints gbc_btnX = new GridBagConstraints();
-		gbc_btnX.insets = new Insets(0, 0, 5, 5);
-		gbc_btnX.fill = GridBagConstraints.BOTH;
-		gbc_btnX.anchor = GridBagConstraints.NORTHWEST;
-		gbc_btnX.gridx = 2;
-		gbc_btnX.gridy = 0;
-		btnX.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				panel.remove(nicknamePanel);
-				panel.validate();
-				panel.repaint();
-			}
-		});
-		nicknamePanel.add(btnX,gbc_btnX);
-		return nicknamePanel;
-	}
-	
 	private void generate(){
 		Thread thread = new Thread(){
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				try {
-					Integer countryCode,regionCode,farmCode;
-					String type = "T";
-					if(comboBoxType.getSelectedItem().toString().equals("Bee"))type="B";
-					if(comboBoxType.getSelectedItem().toString().equals("Tree"))type="T";
-					countryCode = 1;regionCode=1;farmCode=1;
-					for (Integer key : mapFarm.keySet()) {
-						if(mapCountry.get(key)==comboBoxFarm.getSelectedItem().toString()){
-							farmCode = key;
-							break;
-						}
+					String[] type = comboBoxType.getSelectedItem().toString().split(":");
+					String typeName = type[0];
+					String typeCode = type[1];
+					String[] farm = comboBoxFarm.getSelectedItem().toString().split(":");
+					String farmName = farm[0];
+					String farmCode = farm[1];
+					Integer qrCount = Integer.valueOf(textFieldStart.getText());
+					DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
+					for (int i = 1; i <= qrCount; i++) {
+						
+						//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
+						String data = "GG"+typeCode+farmCode+getRandomCode();
+						URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
+						BufferedImage image = ImageIO.read(url);
+						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+						BufferedImage altered = config.createCompatibleImage(image.getWidth()+80, image.getHeight());
+						Graphics2D rect = altered.createGraphics();
+						rect.setColor(Color.WHITE);
+						rect.fillRect(0, 0, 80, altered.getHeight());
+						rect.drawImage(image, 80, 0, null);
+						rect.setFont(rect.getFont().deriveFont(Font.BOLD,10f));
+						rect.setColor(Color.BLACK);
+						rect.rotate(Math.toRadians(-90));
+						rect.drawString(farmName.toUpperCase(), -image.getHeight()+12, 90);
+						rect.rotate(Math.toRadians(90));
+						rect.setFont(rect.getFont().deriveFont(Font.PLAIN,12f));
+						rect.drawString(typeName.toUpperCase(), 95, image.getHeight());
+						rect.dispose();
+						File file = new File(qrDir+"/"+typeCode+"/");
+						if (!file.exists()) file.mkdirs();
+						ImageIO.write(altered, "png", new File(qrDir+"/"+typeCode+"/"+data+".png"));
+						lm.addElement(data);
 					}
-					for (int i=0; i<rangeParentPanel.getComponentCount();i++){
+					/*for (int i=0; i<rangeParentPanel.getComponentCount();i++){
 						JPanel rangePanel = (JPanel)rangeParentPanel.getComponent(i);
 						JComboBox<String> cbCol = (JComboBox<String>)rangePanel.getComponent(0);
 						String colStr = cbCol.getSelectedItem().toString();
 						int rowStart = new Integer(((JTextField)rangePanel.getComponent(1)).getText().toString());
 						int rowEnd = new Integer(((JTextField)rangePanel.getComponent(2)).getText().toString());
-						DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
 						JScrollPane scrollPane = (JScrollPane)rangePanel.getComponent(4);
-						for (int j = rowStart; j <= rowEnd; j++) {
-							
-							//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
-							String data = "GG"+"AB"+"ABC"+"AbC1";
-							URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
-							BufferedImage image = ImageIO.read(url);
-							GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-							BufferedImage altered = config.createCompatibleImage(image.getWidth()+80, image.getHeight());
-							Graphics2D rect = altered.createGraphics();
-							rect.setColor(Color.WHITE);
-							rect.fillRect(0, 0, 80, altered.getHeight());
-							rect.drawImage(image, 80, 0, null);
-							rect.setFont(rect.getFont().deriveFont(Font.BOLD,80f));
-							rect.setColor(Color.BLACK);
-							rect.rotate(Math.toRadians(-90));
-							rect.drawString(colStr+j, -image.getHeight()+12, 80);
-							rect.rotate(Math.toRadians(90));
-							rect.setFont(rect.getFont().deriveFont(Font.PLAIN,20f));
-							rect.drawString(type.equals("B")?"HIVE":"TREE", 100, image.getHeight()-3);
-							rect.dispose();
-							ImageIO.write(altered, "png", new File(qrDir+"/"+data+".png"));
-							lm.addElement(data);
-						}
 						
-					}
+					}*/
 				} catch (MalformedURLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -524,5 +314,42 @@ public class Main {
 		thread.start();
 	}
 	
+	private List<GGObject> ggObjs(String table) {
+		List<GGObject> prodTypes = new ArrayList<GGObject>();
+		try {
+			JsonParser jsonParser = new JsonParser(GG_WEB_DIR+"get_codes.php?table="+table);
+			JSONObject jsonObj = jsonParser.parse();
+			JSONArray jsonArr = (JSONArray)jsonObj.get("results");
+			for (Object object : jsonArr) {
+				GGObject ggo = new GGObject();
+				JSONObject arrObj = (JSONObject)object;
+				ggo.setId(new BigInteger((String)arrObj.get("id")));
+				ggo.setName((String)arrObj.get("name"));
+				ggo.setCode((String)arrObj.get("code"));
+				prodTypes.add(ggo);
+			}
+		} catch (ParseException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Collections.sort(prodTypes, new Comparator<GGObject>() {
+		    @Override
+		    public int compare(GGObject o1, GGObject o2) {
+		        return o1.getCode().compareTo(o2.getCode());
+		    }
+		});
+		return prodTypes;
+	}
 	
+	private List<GGObject> getProdTypes(){
+		return ggObjs("prod_type");
+	}
+	
+	private List<GGObject> getFarms(){
+		return ggObjs("farm");
+	}
+	
+	private String getRandomCode(){
+		return RandomCharacters.randomString(4);
+	}
 }
