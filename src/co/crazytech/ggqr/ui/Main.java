@@ -284,6 +284,8 @@ public class Main {
 						rect.setColor(Color.BLACK);
 						rect.rotate(Math.toRadians(-90));
 						rect.drawString(farmName.toUpperCase(), -image.getHeight()+12, 90);
+						rect.drawString("ID", -image.getHeight()+12, 80);
+						rect.drawString("NICKNAME", -image.getHeight()+110, 80);
 						rect.rotate(Math.toRadians(90));
 						rect.setFont(rect.getFont().deriveFont(Font.PLAIN,12f));
 						rect.drawString(typeName.toUpperCase(), 95, image.getHeight());
