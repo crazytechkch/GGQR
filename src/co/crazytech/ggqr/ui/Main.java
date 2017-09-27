@@ -33,6 +33,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.JList;
 
 import javax.imageio.ImageIO;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import org.json.simple.JSONArray;
@@ -45,6 +46,8 @@ import co.crazytech.commons.util.RandomCharacters;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -63,6 +66,9 @@ import javax.swing.JEditorPane;
 import javax.swing.JFormattedTextField;
 
 import java.awt.GridLayout;
+import java.awt.Panel;
+import javax.swing.JRadioButton;
+import java.awt.Choice;
 
 public class Main {
 
@@ -74,7 +80,9 @@ public class Main {
 	private String qrDir;
 	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
 	private static final String GG_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/gga/";
-	private JPanel rangeParentPanel;
+	private static final int AGROASS_TREE = 0xA01;
+	private static final int AGROASS_HIVE = 0xA02;
+	private String selectedCode;
 	private JFormattedTextField textFieldStart,textFieldEnd;
 	/**
 	 * Launch the application.
@@ -125,9 +133,9 @@ public class Main {
 		frmGaharuGadingQr.getContentPane().add(panelLeft, BorderLayout.WEST);
 		GridBagLayout gbl_panelLeft = new GridBagLayout();
 		gbl_panelLeft.columnWidths = new int[]{42, 86, 0};
-		gbl_panelLeft.rowHeights = new int[]{0, 20, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panelLeft.rowHeights = new int[]{0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_panelLeft.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		panelLeft.setLayout(gbl_panelLeft);
 		
 		comboBoxType = new JComboBox();
@@ -193,24 +201,87 @@ public class Main {
 		        });
 			}
 		});
+		
+		Panel panel = new Panel();
+		GridBagConstraints gbc_panel = new GridBagConstraints();
+		gbc_panel.gridwidth = 2;
+		gbc_panel.insets = new Insets(0, 0, 5, 0);
+		gbc_panel.gridx = 0;
+		gbc_panel.gridy = 2;
+		panelLeft.add(panel, gbc_panel);
+		
+		Choice choiceExisting = new Choice();
+		choiceExisting.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent itemEvent) {
+				String item = itemEvent.getItem().toString();
+				selectedCode = item.substring(item.length()-4);
+				System.out.println(selectedCode);
+			}
+		});
+		
+		JRadioButton rdbtnNew = new JRadioButton("New");
+		rdbtnNew.setSelected(true);
+		rdbtnNew.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (rdbtnNew.isSelected()) {
+					selectedCode = null;
+					choiceExisting.setEnabled(false);
+					textFieldStart.setEnabled(true);
+				}
+			}
+		});
+		JRadioButton rdbtnExisting = new JRadioButton("Existing");
+		rdbtnExisting.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (rdbtnExisting.isSelected()) {
+					choiceExisting.setEnabled(true);
+					choiceExisting.removeAll();
+					for (GGObject obj : getAgroassets(AGROASS_HIVE)) {
+						choiceExisting.addItem(obj.getName()+":"+obj.getCode());
+					}
+					textFieldStart.setEnabled(false);
+				}
+			}
+		});
+		
+		ButtonGroup btnGrp = new ButtonGroup();
+		btnGrp.add(rdbtnNew);btnGrp.add(rdbtnExisting);
+		
+		panel.add(rdbtnNew);
+		panel.add(rdbtnExisting);
+		
+		GridBagConstraints gbc_choiceExisting = new GridBagConstraints();
+		gbc_choiceExisting.fill = GridBagConstraints.HORIZONTAL;
+		gbc_choiceExisting.gridwidth = 2;
+		gbc_choiceExisting.insets = new Insets(0, 0, 5, 5);
+		gbc_choiceExisting.gridx = 0;
+		gbc_choiceExisting.gridy = 3;
+		panelLeft.add(choiceExisting, gbc_choiceExisting);
 		textFieldStart.setText("1");
 		GridBagConstraints gbc_textFieldStart = new GridBagConstraints();
-		gbc_textFieldStart.gridheight = 5;
 		gbc_textFieldStart.gridwidth = 2;
 		gbc_textFieldStart.insets = new Insets(0, 0, 5, 0);
 		gbc_textFieldStart.fill = GridBagConstraints.BOTH;
 		gbc_textFieldStart.gridx = 0;
-		gbc_textFieldStart.gridy = 2;
+		gbc_textFieldStart.gridy = 4;
 		panelLeft.add(textFieldStart, gbc_textFieldStart);
 		
 		JScrollPane scrollPaneList = new JScrollPane();
 		listCodes = new JList(new DefaultListModel<String>());
 		scrollPaneList.setViewportView(listCodes);
 		GridBagConstraints gbc_list_codes = new GridBagConstraints();
+		gbc_list_codes.insets = new Insets(0, 0, 5, 0);
+		gbc_list_codes.gridheight = 7;
 		gbc_list_codes.gridwidth = 2;
 		gbc_list_codes.fill = GridBagConstraints.BOTH;
 		gbc_list_codes.gridx = 0;
-		gbc_list_codes.gridy = 8;
+		gbc_list_codes.gridy = 5;
 		panelLeft.add(scrollPaneList, gbc_list_codes);
 		
 		
@@ -271,7 +342,7 @@ public class Main {
 					for (int i = 1; i <= qrCount; i++) {
 						
 						//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
-						String data = "GG"+typeCode+farmCode+getRandomCode();
+						String data = "GG"+typeCode+farmCode+getCode();
 						URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
 						BufferedImage image = ImageIO.read(url);
 						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
@@ -343,6 +414,14 @@ public class Main {
 		return prodTypes;
 	}
 	
+	private List<GGObject> getAgroassets(int agroass){
+		switch(agroass){
+			case AGROASS_HIVE: return ggObjs("v_hive");
+			case AGROASS_TREE: return ggObjs("v_tree");
+		}
+		return ggObjs("v_tree");
+	}
+	
 	private List<GGObject> getProdTypes(){
 		return ggObjs("prod_type");
 	}
@@ -351,7 +430,8 @@ public class Main {
 		return ggObjs("farm");
 	}
 	
-	private String getRandomCode(){
+	private String getCode(){
+		if (selectedCode!=null) return selectedCode;
 		return RandomCharacters.randomString(4);
 	}
 }
