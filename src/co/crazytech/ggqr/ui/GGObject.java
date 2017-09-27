@@ -6,7 +6,14 @@ public class GGObject {
 	private BigInteger id;
 	private String name;
 	private String code;
+	private String dcode;
 	
+	public String getDcode() {
+		return dcode;
+	}
+	public void setDcode(String dcode) {
+		this.dcode = dcode;
+	}
 	public BigInteger getId() {
 		return id;
 	}
@@ -29,7 +36,7 @@ public class GGObject {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return this.name+":"+this.code;
+		return ((this.getDcode()!=null)?(this.getDcode()+":"):"")+this.name+":"+this.code;
 	}
 	
 }

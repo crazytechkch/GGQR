@@ -81,19 +81,16 @@ public class Main {
 
 	private JFrame frmGaharuGadingQr;
 	private JList<String> listCodes;
-	private JComboBox<String> comboBoxSize,comboBoxColumn;
+	private JComboBox<String> comboBoxSize, comboBoxUrl;
 	private JComboBox<GGObject> comboBoxType,comboBoxFarm,choiceExisting;
 	private JRadioButton rdbtnNew,rdbtnExisting;
-	private Map<Integer, String> mapCountry,mapRegion,mapFarm;	
-	private String selectedImageName;
 	private String qrDir;
 	private AppConfig config;
 	private static final String GG_WEB_DIR = "http://swopt.crazytech.co/gga/";
 	private static final int AGROASS_TREE = 0xA01;
 	private static final int AGROASS_HIVE = 0xA02;
 	private String selectedCode;
-	private JFormattedTextField textFieldStart,textFieldEnd;
-	private JComboBox comboBoxUrl;
+	private JFormattedTextField textFieldStart;
 	/**
 	 * Launch the application.
 	 */
@@ -130,15 +127,6 @@ public class Main {
 		frmGaharuGadingQr.setSize(new Dimension(640, 400));
 		
 		
-		mapCountry = new HashMap<>();
-		mapCountry.put(1, "Malaysia");
-		
-		mapRegion = new HashMap<>();
-		mapRegion.put(1, "Sarawak");
-		
-		mapFarm = new HashMap<>();
-		mapFarm.put(1, "Lundu Gunung Gading");
-		
 		JPanel panelLeft = new JPanel();
 		frmGaharuGadingQr.getContentPane().add(panelLeft, BorderLayout.WEST);
 		GridBagLayout gbl_panelLeft = new GridBagLayout();
@@ -148,7 +136,7 @@ public class Main {
 		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		panelLeft.setLayout(gbl_panelLeft);
 		
-		comboBoxType = new JComboBox();
+		comboBoxType = new JComboBox<GGObject>();
 		GridBagConstraints gbc_comboBoxType = new GridBagConstraints();
 		gbc_comboBoxType.insets = new Insets(0, 0, 5, 5);
 		gbc_comboBoxType.fill = GridBagConstraints.HORIZONTAL;
@@ -168,7 +156,7 @@ public class Main {
 			}
 		});
 		
-		comboBoxUrl = new JComboBox();
+		comboBoxUrl = new JComboBox<String>();
 		comboBoxUrl.setEditable(true);
 		
 		try {
@@ -189,7 +177,7 @@ public class Main {
 		panelLeft.add(comboBoxUrl, gbc_comboBoxUrl);
 		panelLeft.add(comboBoxType, gbc_comboBoxType);
 		
-		comboBoxSize = new JComboBox();
+		comboBoxSize = new JComboBox<String>();
 		comboBoxSize.setEnabled(false);
 		GridBagConstraints gbc_comboBoxSize = new GridBagConstraints();
 		gbc_comboBoxSize.insets = new Insets(0, 0, 5, 0);
@@ -208,7 +196,7 @@ public class Main {
 		comboBoxSize.setSelectedIndex(2);
 		panelLeft.add(comboBoxSize, gbc_comboBoxSize);
 		
-		comboBoxFarm = new JComboBox();
+		comboBoxFarm = new JComboBox<GGObject>();
 		GridBagConstraints gbc_comboBoxFarm = new GridBagConstraints();
 		gbc_comboBoxFarm.gridwidth = 2;
 		gbc_comboBoxFarm.insets = new Insets(0, 0, 5, 0);
@@ -250,7 +238,7 @@ public class Main {
 		gbc_panel.gridy = 3;
 		panelLeft.add(panel, gbc_panel);
 		
-		choiceExisting = new JComboBox();
+		choiceExisting = new JComboBox<GGObject>();
 		choiceExisting.addItemListener(new ItemListener() {
 			
 			@Override
@@ -470,6 +458,8 @@ public class Main {
 				ggo.setId(new BigInteger((String)arrObj.get("id")));
 				ggo.setName((String)arrObj.get("name"));
 				ggo.setCode((String)arrObj.get("code"));
+				if(table.equals("agroasset")||table.equals("v_hive")||table.equals("v_tree"))
+					ggo.setDcode((String)arrObj.get("dcode"));
 				prodTypes.add(ggo);
 			}
 		} catch (ParseException | IOException e) {
@@ -479,7 +469,15 @@ public class Main {
 		Collections.sort(prodTypes, new Comparator<GGObject>() {
 		    @Override
 		    public int compare(GGObject o1, GGObject o2) {
-		        return o1.getCode().compareTo(o2.getCode());
+		    	if(table.equals("agroasset")||table.equals("v_hive")||table.equals("v_tree")){
+		    		int dcode1 = Integer.parseInt(o1.getDcode());
+		    		int dcode2 = Integer.parseInt(o2.getDcode());
+		    		if (dcode1 == dcode2) return 0;
+                    else if (dcode1 < dcode2)return -1;
+                    return 1;
+		    	}
+		    		
+		        return o1.getName().compareTo(o2.getName());
 		    }
 		});
 		return prodTypes;
