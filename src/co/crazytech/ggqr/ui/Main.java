@@ -74,7 +74,9 @@ public class Main {
 
 	private JFrame frmGaharuGadingQr;
 	private JList<String> listCodes;
-	private JComboBox<String> comboBoxType,comboBoxSize,comboBoxFarm,comboBoxColumn;
+	private JComboBox<String> comboBoxSize,comboBoxColumn;
+	private JComboBox<GGObject> comboBoxType,comboBoxFarm,choiceExisting;
+	private JRadioButton rdbtnNew,rdbtnExisting;
 	private Map<Integer, String> mapCountry,mapRegion,mapFarm;	
 	private String selectedImageName;
 	private String qrDir;
@@ -145,8 +147,18 @@ public class Main {
 		gbc_comboBoxType.gridx = 0;
 		gbc_comboBoxType.gridy = 0;
 		for (GGObject obj : getProdTypes()) {
-			comboBoxType.addItem(obj.getName()+":"+obj.getCode());
+			comboBoxType.addItem(obj);
 		}
+		comboBoxType.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				GGObject ggObj = (GGObject)e.getItem();
+				if((ggObj.getCode().equals("AA")||ggObj.getCode().equals("BA"))
+						&&rdbtnExisting.isSelected())
+					populateExistingChoices();
+			}
+		});
 		panelLeft.add(comboBoxType, gbc_comboBoxType);
 		
 		comboBoxSize = new JComboBox();
@@ -177,7 +189,7 @@ public class Main {
 		gbc_comboBoxFarm.gridy = 1;
 		panelLeft.add(comboBoxFarm, gbc_comboBoxFarm);
 		for (GGObject obj : getFarms()) {
-			comboBoxFarm.addItem(obj.getName()+":"+obj.getCode());
+			comboBoxFarm.addItem(obj);
 		}
 		
 		textFieldStart = new JFormattedTextField(NumberFormat.getNumberInstance());
@@ -210,7 +222,7 @@ public class Main {
 		gbc_panel.gridy = 2;
 		panelLeft.add(panel, gbc_panel);
 		
-		Choice choiceExisting = new Choice();
+		choiceExisting = new JComboBox();
 		choiceExisting.addItemListener(new ItemListener() {
 			
 			@Override
@@ -221,7 +233,7 @@ public class Main {
 			}
 		});
 		
-		JRadioButton rdbtnNew = new JRadioButton("New");
+		rdbtnNew = new JRadioButton("New");
 		rdbtnNew.setSelected(true);
 		rdbtnNew.addActionListener(new ActionListener() {
 			
@@ -234,19 +246,15 @@ public class Main {
 				}
 			}
 		});
-		JRadioButton rdbtnExisting = new JRadioButton("Existing");
+		rdbtnExisting = new JRadioButton("Existing");
 		rdbtnExisting.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if (rdbtnExisting.isSelected()) {
-					choiceExisting.setEnabled(true);
-					choiceExisting.removeAll();
-					for (GGObject obj : getAgroassets(AGROASS_HIVE)) {
-						choiceExisting.addItem(obj.getName()+":"+obj.getCode());
-					}
-					textFieldStart.setEnabled(false);
-				}
+				choiceExisting.setEnabled(true);
+				populateExistingChoices();
+				textFieldStart.setText("1");
+				textFieldStart.setEnabled(false);
 			}
 		});
 		
@@ -323,6 +331,16 @@ public class Main {
 				}
 			}
 		});
+	}
+	
+	private void populateExistingChoices(){
+		choiceExisting.removeAllItems();
+		GGObject ggObj = (GGObject)comboBoxType.getSelectedItem();
+		int agroass = AGROASS_TREE;
+		if(ggObj.getCode().equals("BA"))agroass = AGROASS_HIVE;
+		for (GGObject obj : getAgroassets(agroass)) {
+			choiceExisting.addItem(obj);
+		}
 	}
 	
 	private void generate(){

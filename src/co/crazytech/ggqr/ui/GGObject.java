@@ -26,5 +26,10 @@ public class GGObject {
 		this.code = code;
 	}
 	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return this.name+":"+this.code;
+	}
 	
 }
