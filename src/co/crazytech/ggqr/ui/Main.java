@@ -88,8 +88,7 @@ public class Main {
 	private String selectedImageName;
 	private String qrDir;
 	private AppConfig config;
-	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
-	private static final String GG_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/gga/";
+	private static final String GG_WEB_DIR = "http://swopt.crazytech.co/gga/";
 	private static final int AGROASS_TREE = 0xA01;
 	private static final int AGROASS_HIVE = 0xA02;
 	private String selectedCode;
