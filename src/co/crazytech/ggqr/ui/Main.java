@@ -30,6 +30,10 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import javax.swing.JList;
 
 import javax.imageio.ImageIO;
@@ -39,6 +43,8 @@ import javax.swing.JButton;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+
+import com.crazytech.io.IOUtil;
 
 import co.crazytech.commons.json.JsonParser;
 import co.crazytech.commons.util.RandomCharacters;
@@ -51,6 +57,7 @@ import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -80,12 +87,14 @@ public class Main {
 	private Map<Integer, String> mapCountry,mapRegion,mapFarm;	
 	private String selectedImageName;
 	private String qrDir;
+	private AppConfig config;
 	private static final String QR_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/qr.php";
 	private static final String GG_WEB_DIR = "https://phpmysql-crazytechco.rhcloud.com/gga/";
 	private static final int AGROASS_TREE = 0xA01;
 	private static final int AGROASS_HIVE = 0xA02;
 	private String selectedCode;
 	private JFormattedTextField textFieldStart,textFieldEnd;
+	private JComboBox comboBoxUrl;
 	/**
 	 * Launch the application.
 	 */
@@ -135,9 +144,9 @@ public class Main {
 		frmGaharuGadingQr.getContentPane().add(panelLeft, BorderLayout.WEST);
 		GridBagLayout gbl_panelLeft = new GridBagLayout();
 		gbl_panelLeft.columnWidths = new int[]{42, 86, 0};
-		gbl_panelLeft.rowHeights = new int[]{0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panelLeft.rowHeights = new int[]{0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_panelLeft.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
+		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		panelLeft.setLayout(gbl_panelLeft);
 		
 		comboBoxType = new JComboBox();
@@ -145,7 +154,7 @@ public class Main {
 		gbc_comboBoxType.insets = new Insets(0, 0, 5, 5);
 		gbc_comboBoxType.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxType.gridx = 0;
-		gbc_comboBoxType.gridy = 0;
+		gbc_comboBoxType.gridy = 1;
 		for (GGObject obj : getProdTypes()) {
 			comboBoxType.addItem(obj);
 		}
@@ -159,6 +168,26 @@ public class Main {
 					populateExistingChoices();
 			}
 		});
+		
+		comboBoxUrl = new JComboBox();
+		comboBoxUrl.setEditable(true);
+		
+		try {
+			config = loadConfig();
+			for (String url : config.getUrls()) {
+				comboBoxUrl.addItem(url);
+			}
+		} catch (JAXBException | IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		GridBagConstraints gbc_comboBoxUrl = new GridBagConstraints();
+		gbc_comboBoxUrl.gridwidth = 2;
+		gbc_comboBoxUrl.insets = new Insets(0, 0, 5, 5);
+		gbc_comboBoxUrl.fill = GridBagConstraints.HORIZONTAL;
+		gbc_comboBoxUrl.gridx = 0;
+		gbc_comboBoxUrl.gridy = 0;
+		panelLeft.add(comboBoxUrl, gbc_comboBoxUrl);
 		panelLeft.add(comboBoxType, gbc_comboBoxType);
 		
 		comboBoxSize = new JComboBox();
@@ -167,7 +196,7 @@ public class Main {
 		gbc_comboBoxSize.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBoxSize.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxSize.gridx = 1;
-		gbc_comboBoxSize.gridy = 0;
+		gbc_comboBoxSize.gridy = 1;
 		comboBoxSize.addItem("200x200");
 		comboBoxSize.addItem("250x250");
 		comboBoxSize.addItem("300x300");
@@ -186,7 +215,7 @@ public class Main {
 		gbc_comboBoxFarm.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBoxFarm.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxFarm.gridx = 0;
-		gbc_comboBoxFarm.gridy = 1;
+		gbc_comboBoxFarm.gridy = 2;
 		panelLeft.add(comboBoxFarm, gbc_comboBoxFarm);
 		for (GGObject obj : getFarms()) {
 			comboBoxFarm.addItem(obj);
@@ -219,7 +248,7 @@ public class Main {
 		gbc_panel.gridwidth = 2;
 		gbc_panel.insets = new Insets(0, 0, 5, 0);
 		gbc_panel.gridx = 0;
-		gbc_panel.gridy = 2;
+		gbc_panel.gridy = 3;
 		panelLeft.add(panel, gbc_panel);
 		
 		choiceExisting = new JComboBox();
@@ -267,9 +296,9 @@ public class Main {
 		GridBagConstraints gbc_choiceExisting = new GridBagConstraints();
 		gbc_choiceExisting.fill = GridBagConstraints.HORIZONTAL;
 		gbc_choiceExisting.gridwidth = 2;
-		gbc_choiceExisting.insets = new Insets(0, 0, 5, 5);
+		gbc_choiceExisting.insets = new Insets(0, 0, 5, 0);
 		gbc_choiceExisting.gridx = 0;
-		gbc_choiceExisting.gridy = 3;
+		gbc_choiceExisting.gridy = 4;
 		panelLeft.add(choiceExisting, gbc_choiceExisting);
 		textFieldStart.setText("1");
 		GridBagConstraints gbc_textFieldStart = new GridBagConstraints();
@@ -277,19 +306,18 @@ public class Main {
 		gbc_textFieldStart.insets = new Insets(0, 0, 5, 0);
 		gbc_textFieldStart.fill = GridBagConstraints.BOTH;
 		gbc_textFieldStart.gridx = 0;
-		gbc_textFieldStart.gridy = 4;
+		gbc_textFieldStart.gridy = 5;
 		panelLeft.add(textFieldStart, gbc_textFieldStart);
 		
 		JScrollPane scrollPaneList = new JScrollPane();
 		listCodes = new JList(new DefaultListModel<String>());
 		scrollPaneList.setViewportView(listCodes);
 		GridBagConstraints gbc_list_codes = new GridBagConstraints();
-		gbc_list_codes.insets = new Insets(0, 0, 5, 0);
 		gbc_list_codes.gridheight = 7;
 		gbc_list_codes.gridwidth = 2;
 		gbc_list_codes.fill = GridBagConstraints.BOTH;
 		gbc_list_codes.gridx = 0;
-		gbc_list_codes.gridy = 5;
+		gbc_list_codes.gridy = 6;
 		panelLeft.add(scrollPaneList, gbc_list_codes);
 		
 		
@@ -361,7 +389,7 @@ public class Main {
 						
 						//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
 						String data = "GG"+typeCode+farmCode+getCode();
-						URL url = new URL(QR_WEB_DIR+"?data="+data+"&size=300x300&logo=logo.png");
+						URL url = new URL(comboBoxUrl.getSelectedItem().toString()+"?data="+data+"&size=300x300&logo=logo.png");
 						BufferedImage image = ImageIO.read(url);
 						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 						BufferedImage altered = config.createCompatibleImage(image.getWidth()+80, image.getHeight());
@@ -384,15 +412,7 @@ public class Main {
 						ImageIO.write(altered, "png", new File(qrDir+"/"+typeCode+"/"+data+".png"));
 						lm.addElement(data);
 					}
-					/*for (int i=0; i<rangeParentPanel.getComponentCount();i++){
-						JPanel rangePanel = (JPanel)rangeParentPanel.getComponent(i);
-						JComboBox<String> cbCol = (JComboBox<String>)rangePanel.getComponent(0);
-						String colStr = cbCol.getSelectedItem().toString();
-						int rowStart = new Integer(((JTextField)rangePanel.getComponent(1)).getText().toString());
-						int rowEnd = new Integer(((JTextField)rangePanel.getComponent(2)).getText().toString());
-						JScrollPane scrollPane = (JScrollPane)rangePanel.getComponent(4);
-						
-					}*/
+					writeConfig(comboBoxUrl.getSelectedItem().toString());
 				} catch (MalformedURLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -403,6 +423,40 @@ public class Main {
 			}
 		};
 		thread.start();
+	}
+	
+	private AppConfig loadConfig() throws JAXBException,IOException{
+		JAXBContext jc = JAXBContext.newInstance(AppConfig.class);
+		AppConfig config = new AppConfig();
+		if(new File("config.dat").exists()){
+			Unmarshaller unmarshaller = jc.createUnmarshaller();
+			String xmlStr = IOUtil.readFile("config.dat");
+			StringReader reader = new StringReader(xmlStr);
+			config = (AppConfig) unmarshaller.unmarshal(reader);
+		} else {
+			Marshaller marshaller = jc.createMarshaller();
+			List<String> urls = new ArrayList<String>();
+			urls.add("http://swopt.crazytech.co/qr.php");
+			config.setUrls(urls);
+			marshaller.marshal(config, new File("config.dat"));
+		}
+		return config;
+	}
+	
+	private void writeConfig(String url) {
+		if(!config.getUrls().contains(url)){
+			config.getUrls().add(url);
+			JAXBContext jaxbContext;
+			try {
+				jaxbContext = JAXBContext.newInstance(AppConfig.class);
+				Marshaller marshaller = jaxbContext.createMarshaller();
+				marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+				marshaller.marshal(config, new File("config.dat"));
+			} catch (JAXBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	private List<GGObject> ggObjs(String table) {

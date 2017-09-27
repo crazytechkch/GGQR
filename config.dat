@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AppConfig>
+    <urls>
+        <url>http://swopt.crazytech.co/qr.php</url>
+        <url>http://localhost/qr.php</url>
+    </urls>
+</AppConfig>
