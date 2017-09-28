@@ -370,7 +370,8 @@ public class Main {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				ListModel<String> lm = listCodes.getModel();
-				String selected = lm.getElementAt(listCodes.getSelectedIndex());
+				String[] strings = lm.getElementAt(listCodes.getSelectedIndex()).split(":");
+				String selected = strings[strings.length-1];
 				editorPane.setContentType("text/html");
 				try {
 					URL url = new File(qrDir+"/"+selected.substring(2, 4)+"/"+selected+".png").toURI().toURL();
@@ -413,11 +414,17 @@ public class Main {
 					for (int i = 1; i <= qrCount; i++) {
 						if(rdbtnExisting.isSelected()){
 							for (GGObject ggObject : listExistingCodes.getSelectedValuesList()) {
-								drawQR(true,lm,typeCode,farmCode,farmName,typeName,
+								drawQR(true,typeCode,farmCode,farmName,typeName,
 										ggObject.getTruncatedCode(),ggObject.getDcode(),ggObject.getName());
+								lm.addElement(ggObject.getDcode()+":"+ggObject.getName()+":"+"GG"+typeCode+farmCode+ggObject.getTruncatedCode());
 							}
+							
 						}
-						else drawQR(false,lm,typeCode, farmCode,farmName,typeName,RandomCharacters.randomString(4));
+						else {
+							String code = RandomCharacters.randomString(4);
+							drawQR(false,typeCode, farmCode,farmName,typeName,code);
+							lm.addElement("GG"+typeCode+farmCode+code);
+						}
 						//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
 						
 						
@@ -435,7 +442,7 @@ public class Main {
 		thread.start();
 	}
 	
-	private void drawQR(boolean isExisting, DefaultListModel<String> lm, String... params) throws IOException{
+	private void drawQR(boolean isExisting, String... params) throws IOException{
 		String typeCode = params[0];
 		String farmCode = params[1];
 		String farmName = params[2];
@@ -485,7 +492,6 @@ public class Main {
 		File file = new File(qrDir+"/"+typeCode+"/");
 		if (!file.exists()) file.mkdirs();
 		ImageIO.write(altered, "png", new File(qrDir+"/"+typeCode+"/"+data+".png"));
-		lm.addElement(data);
 	}
 	
 	private AppConfig loadConfig() throws JAXBException,IOException{
