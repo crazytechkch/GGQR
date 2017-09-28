@@ -33,6 +33,10 @@ public class GGObject {
 		this.code = code;
 	}
 	
+	public String getTruncatedCode(){
+		return code.substring(code.length()-4);
+	}
+	
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub

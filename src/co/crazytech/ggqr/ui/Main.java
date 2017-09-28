@@ -61,6 +61,7 @@ import java.io.StringReader;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,21 +77,23 @@ import java.awt.GridLayout;
 import java.awt.Panel;
 import javax.swing.JRadioButton;
 import java.awt.Choice;
+import java.awt.ScrollPane;
 
 public class Main {
 
 	private JFrame frmGaharuGadingQr;
 	private JList<String> listCodes;
 	private JComboBox<String> comboBoxSize, comboBoxUrl;
-	private JComboBox<GGObject> comboBoxType,comboBoxFarm,choiceExisting;
+	private JComboBox<GGObject> comboBoxType,comboBoxFarm;
 	private JRadioButton rdbtnNew,rdbtnExisting;
 	private String qrDir;
 	private AppConfig config;
 	private static final String GG_WEB_DIR = "http://swopt.crazytech.co/gga/";
 	private static final int AGROASS_TREE = 0xA01;
 	private static final int AGROASS_HIVE = 0xA02;
-	private String selectedCode;
 	private JFormattedTextField textFieldStart;
+	private JScrollPane scrollPane_1;
+	private JList<GGObject> listExistingCodes;
 	/**
 	 * Launch the application.
 	 */
@@ -133,7 +136,7 @@ public class Main {
 		gbl_panelLeft.columnWidths = new int[]{42, 86, 0};
 		gbl_panelLeft.rowHeights = new int[]{0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_panelLeft.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
+		gbl_panelLeft.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		panelLeft.setLayout(gbl_panelLeft);
 		
 		comboBoxType = new JComboBox<GGObject>();
@@ -142,9 +145,24 @@ public class Main {
 		gbc_comboBoxType.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxType.gridx = 0;
 		gbc_comboBoxType.gridy = 1;
-		for (GGObject obj : getProdTypes()) {
-			comboBoxType.addItem(obj);
-		}
+		Thread prodThread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try {
+					for (GGObject obj : getProdTypes()) {
+						comboBoxType.addItem(obj);
+					}
+				} catch (ParseException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					this.run();
+				}
+				
+			}
+		});
+		prodThread.start();
 		comboBoxType.addItemListener(new ItemListener() {
 			
 			@Override
@@ -152,7 +170,12 @@ public class Main {
 				GGObject ggObj = (GGObject)e.getItem();
 				if((ggObj.getCode().equals("AA")||ggObj.getCode().equals("BA"))
 						&&rdbtnExisting.isSelected())
-					populateExistingChoices();
+					try {
+						populateExistingChoices();
+					} catch (ParseException | IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 			}
 		});
 		
@@ -170,7 +193,7 @@ public class Main {
 		}
 		GridBagConstraints gbc_comboBoxUrl = new GridBagConstraints();
 		gbc_comboBoxUrl.gridwidth = 2;
-		gbc_comboBoxUrl.insets = new Insets(0, 0, 5, 5);
+		gbc_comboBoxUrl.insets = new Insets(0, 0, 5, 0);
 		gbc_comboBoxUrl.fill = GridBagConstraints.HORIZONTAL;
 		gbc_comboBoxUrl.gridx = 0;
 		gbc_comboBoxUrl.gridy = 0;
@@ -204,9 +227,79 @@ public class Main {
 		gbc_comboBoxFarm.gridx = 0;
 		gbc_comboBoxFarm.gridy = 2;
 		panelLeft.add(comboBoxFarm, gbc_comboBoxFarm);
-		for (GGObject obj : getFarms()) {
-			comboBoxFarm.addItem(obj);
-		}
+		Thread farmThread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try {
+					for (GGObject obj : getFarms()) {
+						comboBoxFarm.addItem(obj);
+					}
+				} catch (ParseException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					this.run();
+				}
+				
+			}
+		});
+		farmThread.start();
+		Panel panel = new Panel();
+		GridBagConstraints gbc_panel = new GridBagConstraints();
+		gbc_panel.gridwidth = 2;
+		gbc_panel.insets = new Insets(0, 0, 5, 0);
+		gbc_panel.gridx = 0;
+		gbc_panel.gridy = 3;
+		panelLeft.add(panel, gbc_panel);
+		
+		rdbtnNew = new JRadioButton("New");
+		rdbtnNew.setSelected(true);
+		rdbtnNew.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (rdbtnNew.isSelected()) {
+					listExistingCodes.setEnabled(false);
+					textFieldStart.setEnabled(true);
+				}
+			}
+		});
+		rdbtnExisting = new JRadioButton("Existing");
+		rdbtnExisting.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				listExistingCodes.setEnabled(true);
+				try {
+					populateExistingChoices();
+				} catch (ParseException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				textFieldStart.setText("1");
+				textFieldStart.setEnabled(false);
+			}
+		});
+		
+		ButtonGroup btnGrp = new ButtonGroup();
+		btnGrp.add(rdbtnNew);btnGrp.add(rdbtnExisting);
+		
+		panel.add(rdbtnNew);
+		panel.add(rdbtnExisting);
+		
+		scrollPane_1 = new JScrollPane();
+		GridBagConstraints gbc_scrollPane_1 = new GridBagConstraints();
+		gbc_scrollPane_1.gridheight = 2;
+		gbc_scrollPane_1.gridwidth = 2;
+		gbc_scrollPane_1.insets = new Insets(0, 0, 5, 0);
+		gbc_scrollPane_1.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane_1.gridx = 0;
+		gbc_scrollPane_1.gridy = 4;
+		panelLeft.add(scrollPane_1, gbc_scrollPane_1);
+		
+		listExistingCodes = new JList<GGObject>(new DefaultListModel<GGObject>());
+		scrollPane_1.setViewportView(listExistingCodes);
 		
 		textFieldStart = new JFormattedTextField(NumberFormat.getNumberInstance());
 		textFieldStart.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -229,82 +322,24 @@ public class Main {
 		        });
 			}
 		});
-		
-		Panel panel = new Panel();
-		GridBagConstraints gbc_panel = new GridBagConstraints();
-		gbc_panel.gridwidth = 2;
-		gbc_panel.insets = new Insets(0, 0, 5, 0);
-		gbc_panel.gridx = 0;
-		gbc_panel.gridy = 3;
-		panelLeft.add(panel, gbc_panel);
-		
-		choiceExisting = new JComboBox<GGObject>();
-		choiceExisting.addItemListener(new ItemListener() {
-			
-			@Override
-			public void itemStateChanged(ItemEvent itemEvent) {
-				String item = itemEvent.getItem().toString();
-				selectedCode = item.substring(item.length()-4);
-				System.out.println(selectedCode);
-			}
-		});
-		
-		rdbtnNew = new JRadioButton("New");
-		rdbtnNew.setSelected(true);
-		rdbtnNew.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (rdbtnNew.isSelected()) {
-					selectedCode = null;
-					choiceExisting.setEnabled(false);
-					textFieldStart.setEnabled(true);
-				}
-			}
-		});
-		rdbtnExisting = new JRadioButton("Existing");
-		rdbtnExisting.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				choiceExisting.setEnabled(true);
-				populateExistingChoices();
-				textFieldStart.setText("1");
-				textFieldStart.setEnabled(false);
-			}
-		});
-		
-		ButtonGroup btnGrp = new ButtonGroup();
-		btnGrp.add(rdbtnNew);btnGrp.add(rdbtnExisting);
-		
-		panel.add(rdbtnNew);
-		panel.add(rdbtnExisting);
-		
-		GridBagConstraints gbc_choiceExisting = new GridBagConstraints();
-		gbc_choiceExisting.fill = GridBagConstraints.HORIZONTAL;
-		gbc_choiceExisting.gridwidth = 2;
-		gbc_choiceExisting.insets = new Insets(0, 0, 5, 0);
-		gbc_choiceExisting.gridx = 0;
-		gbc_choiceExisting.gridy = 4;
-		panelLeft.add(choiceExisting, gbc_choiceExisting);
 		textFieldStart.setText("1");
 		GridBagConstraints gbc_textFieldStart = new GridBagConstraints();
 		gbc_textFieldStart.gridwidth = 2;
 		gbc_textFieldStart.insets = new Insets(0, 0, 5, 0);
 		gbc_textFieldStart.fill = GridBagConstraints.BOTH;
 		gbc_textFieldStart.gridx = 0;
-		gbc_textFieldStart.gridy = 5;
+		gbc_textFieldStart.gridy = 6;
 		panelLeft.add(textFieldStart, gbc_textFieldStart);
 		
 		JScrollPane scrollPaneList = new JScrollPane();
-		listCodes = new JList(new DefaultListModel<String>());
+		listCodes = new JList<String>(new DefaultListModel<String>());
 		scrollPaneList.setViewportView(listCodes);
 		GridBagConstraints gbc_list_codes = new GridBagConstraints();
-		gbc_list_codes.gridheight = 7;
+		gbc_list_codes.gridheight = 6;
 		gbc_list_codes.gridwidth = 2;
 		gbc_list_codes.fill = GridBagConstraints.BOTH;
 		gbc_list_codes.gridx = 0;
-		gbc_list_codes.gridy = 6;
+		gbc_list_codes.gridy = 7;
 		panelLeft.add(scrollPaneList, gbc_list_codes);
 		
 		
@@ -348,14 +383,17 @@ public class Main {
 		});
 	}
 	
-	private void populateExistingChoices(){
-		choiceExisting.removeAllItems();
+	private void populateExistingChoices() throws UnknownHostException, MalformedURLException, ParseException, IOException{
 		GGObject ggObj = (GGObject)comboBoxType.getSelectedItem();
 		int agroass = AGROASS_TREE;
+		DefaultListModel<GGObject> lm = (DefaultListModel<GGObject>)listExistingCodes.getModel();
+		lm.removeAllElements();
 		if(ggObj.getCode().equals("BA"))agroass = AGROASS_HIVE;
 		for (GGObject obj : getAgroassets(agroass)) {
-			choiceExisting.addItem(obj);
+			lm.addElement(obj);
 		}
+		
+		
 	}
 	
 	private void generate(){
@@ -373,31 +411,16 @@ public class Main {
 					Integer qrCount = Integer.valueOf(textFieldStart.getText());
 					DefaultListModel<String> lm = (DefaultListModel<String>) listCodes.getModel();
 					for (int i = 1; i <= qrCount; i++) {
-						
+						if(rdbtnExisting.isSelected()){
+							for (GGObject ggObject : listExistingCodes.getSelectedValuesList()) {
+								drawQR(true,lm,typeCode,farmCode,farmName,typeName,
+										ggObject.getTruncatedCode(),ggObject.getDcode(),ggObject.getName());
+							}
+						}
+						else drawQR(false,lm,typeCode, farmCode,farmName,typeName,RandomCharacters.randomString(4));
 						//String data = "gga_"+countryCode+"_"+String.format("%03d", regionCode)+"_"+String.format("%04d", farmCode)+"_"+type+"_"+colStr+"_"+String.format("%d", j);
-						String data = "GG"+typeCode+farmCode+getCode();
-						URL url = new URL(comboBoxUrl.getSelectedItem().toString()+"?data="+data+"&size=300x300&logo=logo.png");
-						BufferedImage image = ImageIO.read(url);
-						GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-						BufferedImage altered = config.createCompatibleImage(image.getWidth()+80, image.getHeight());
-						Graphics2D rect = altered.createGraphics();
-						rect.setColor(Color.WHITE);
-						rect.fillRect(0, 0, 80, altered.getHeight());
-						rect.drawImage(image, 80, 0, null);
-						rect.setFont(rect.getFont().deriveFont(Font.BOLD,10f));
-						rect.setColor(Color.BLACK);
-						rect.rotate(Math.toRadians(-90));
-						rect.drawString(farmName.toUpperCase(), -image.getHeight()+12, 90);
-						rect.drawString("ID", -image.getHeight()+12, 80);
-						rect.drawString("NICKNAME", -image.getHeight()+110, 80);
-						rect.rotate(Math.toRadians(90));
-						rect.setFont(rect.getFont().deriveFont(Font.PLAIN,12f));
-						rect.drawString(typeName.toUpperCase(), 95, image.getHeight());
-						rect.dispose();
-						File file = new File(qrDir+"/"+typeCode+"/");
-						if (!file.exists()) file.mkdirs();
-						ImageIO.write(altered, "png", new File(qrDir+"/"+typeCode+"/"+data+".png"));
-						lm.addElement(data);
+						
+						
 					}
 					writeConfig(comboBoxUrl.getSelectedItem().toString());
 				} catch (MalformedURLException e) {
@@ -410,6 +433,62 @@ public class Main {
 			}
 		};
 		thread.start();
+	}
+	
+	private void drawQR(boolean isExisting, DefaultListModel<String> lm, String... params) throws IOException{
+		String typeCode = params[0];
+		String farmCode = params[1];
+		String farmName = params[2];
+		String typeName = params[3];
+		String code = params[4];
+		String data = "GG"+typeCode+farmCode+code;
+		URL url = new URL(comboBoxUrl.getSelectedItem().toString()+"?data="+data+"&size=300x300&logo=logo.png");
+		BufferedImage image = ImageIO.read(url);
+		GraphicsConfiguration config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+		BufferedImage altered = config.createCompatibleImage(image.getWidth()+100, image.getHeight());
+		Graphics2D rect = altered.createGraphics();
+		rect.setColor(Color.WHITE);
+		rect.fillRect(0, 0, 100, altered.getHeight());
+		rect.drawImage(image, 100, 0, null);
+		rect.setFont(rect.getFont().deriveFont(Font.BOLD,10f));
+		rect.setColor(Color.BLACK);
+		rect.rotate(Math.toRadians(-90));
+		rect.drawString(farmName.toUpperCase(), -image.getHeight()+12, 109);
+		rect.drawString("ID", -image.getHeight()+12, 100);
+		rect.drawString("NICKNAME", -image.getHeight()+110, 100);
+		if (isExisting) {
+			String dcode = params[5];
+			String nickname = params[6];
+			rect.setFont(rect.getFont().deriveFont(Font.BOLD,50f));
+			rect.setColor(Color.BLACK);
+			rect.rotate(Math.toRadians(90));
+			rect.drawString(dcode, 10, image.getHeight()-30);
+			rect.rotate(Math.toRadians(-90));
+			rect.setFont(rect.getFont().deriveFont(Font.BOLD,30f));
+			String[] nicknameArr = new String[]{nickname};
+			for (int i = 0; i < nickname.length(); ) {
+		        int codepoint = nickname.codePointAt(i);
+		        i += Character.charCount(codepoint);
+		        if (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HAN) {
+		           nicknameArr = new String[]{nickname.substring(0, i-1),nickname.substring(i-1,nickname.length())};
+		        	for (String string : nicknameArr) {
+						System.out.println(string);
+					}
+		            break;
+		        }
+		    }
+			rect.drawString(nicknameArr[0], -image.getHeight()+110, 30);
+			if (nicknameArr.length>1)rect.drawString(nicknameArr[1], -image.getHeight()+110, 60);
+			
+		}
+		rect.rotate(Math.toRadians(90));
+		rect.setFont(rect.getFont().deriveFont(Font.PLAIN,12f));
+		rect.drawString(typeName.toUpperCase(), 115, image.getHeight()-2);
+		rect.dispose();
+		File file = new File(qrDir+"/"+typeCode+"/");
+		if (!file.exists()) file.mkdirs();
+		ImageIO.write(altered, "png", new File(qrDir+"/"+typeCode+"/"+data+".png"));
+		lm.addElement(data);
 	}
 	
 	private AppConfig loadConfig() throws JAXBException,IOException{
@@ -446,25 +525,21 @@ public class Main {
 		}
 	}
 	
-	private List<GGObject> ggObjs(String table) {
+	private List<GGObject> ggObjs(String table) throws UnknownHostException, MalformedURLException, ParseException, IOException {
 		List<GGObject> prodTypes = new ArrayList<GGObject>();
-		try {
-			JsonParser jsonParser = new JsonParser(GG_WEB_DIR+"get_codes.php?table="+table);
-			JSONObject jsonObj = jsonParser.parse();
-			JSONArray jsonArr = (JSONArray)jsonObj.get("results");
-			for (Object object : jsonArr) {
-				GGObject ggo = new GGObject();
-				JSONObject arrObj = (JSONObject)object;
-				ggo.setId(new BigInteger((String)arrObj.get("id")));
-				ggo.setName((String)arrObj.get("name"));
-				ggo.setCode((String)arrObj.get("code"));
-				if(table.equals("agroasset")||table.equals("v_hive")||table.equals("v_tree"))
-					ggo.setDcode((String)arrObj.get("dcode"));
-				prodTypes.add(ggo);
-			}
-		} catch (ParseException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		JsonParser jsonParser = new JsonParser(GG_WEB_DIR+"get_codes.php?table="+table);
+		JSONObject jsonObj = jsonParser.parse();
+		JSONArray jsonArr = (JSONArray)jsonObj.get("results");
+		for (Object object : jsonArr) {
+			GGObject ggo = new GGObject();
+			JSONObject arrObj = (JSONObject)object;
+			ggo.setId(new BigInteger((String)arrObj.get("id")));
+			byte[] nameByte = ((String)arrObj.get("name")).getBytes("UTF8");
+			ggo.setName(new String(nameByte,"UTF8"));
+			ggo.setCode((String)arrObj.get("code"));
+			if(table.equals("agroasset")||table.equals("v_hive")||table.equals("v_tree"))
+				ggo.setDcode((String)arrObj.get("dcode"));
+			prodTypes.add(ggo);
 		}
 		Collections.sort(prodTypes, new Comparator<GGObject>() {
 		    @Override
@@ -483,7 +558,7 @@ public class Main {
 		return prodTypes;
 	}
 	
-	private List<GGObject> getAgroassets(int agroass){
+	private List<GGObject> getAgroassets(int agroass) throws UnknownHostException, MalformedURLException, ParseException, IOException{
 		switch(agroass){
 			case AGROASS_HIVE: return ggObjs("v_hive");
 			case AGROASS_TREE: return ggObjs("v_tree");
@@ -491,16 +566,11 @@ public class Main {
 		return ggObjs("v_tree");
 	}
 	
-	private List<GGObject> getProdTypes(){
+	private List<GGObject> getProdTypes() throws UnknownHostException, MalformedURLException, ParseException, IOException{
 		return ggObjs("prod_type");
 	}
 	
-	private List<GGObject> getFarms(){
+	private List<GGObject> getFarms() throws UnknownHostException, MalformedURLException, ParseException, IOException{
 		return ggObjs("farm");
-	}
-	
-	private String getCode(){
-		if (selectedCode!=null) return selectedCode;
-		return RandomCharacters.randomString(4);
 	}
 }
