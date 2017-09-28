@@ -471,10 +471,7 @@ public class Main {
 		        i += Character.charCount(codepoint);
 		        if (Character.UnicodeScript.of(codepoint) == Character.UnicodeScript.HAN) {
 		           nicknameArr = new String[]{nickname.substring(0, i-1),nickname.substring(i-1,nickname.length())};
-		        	for (String string : nicknameArr) {
-						System.out.println(string);
-					}
-		            break;
+		           break;
 		        }
 		    }
 			rect.drawString(nicknameArr[0], -image.getHeight()+110, 30);
