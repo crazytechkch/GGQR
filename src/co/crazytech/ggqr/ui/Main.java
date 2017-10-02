@@ -78,6 +78,7 @@ import java.awt.Panel;
 import javax.swing.JRadioButton;
 import java.awt.Choice;
 import java.awt.ScrollPane;
+import java.awt.Toolkit;
 
 public class Main {
 
@@ -123,6 +124,7 @@ public class Main {
 		if(!new File("tempqr").exists())new File("tempqr").mkdirs();
 		qrDir = new File("tempqr").getAbsolutePath();
 		frmGaharuGadingQr = new JFrame();
+		frmGaharuGadingQr.setIconImage(Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/co/crazytech/ggqr/ui/logo.png")));
 		frmGaharuGadingQr.setTitle("Gaharu Gading QR Generator");
 		frmGaharuGadingQr.setBounds(100, 100, 450, 300);
 		frmGaharuGadingQr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
