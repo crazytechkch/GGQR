@@ -129,7 +129,8 @@ public class Main {
 		frmGaharuGadingQr.setBounds(100, 100, 450, 300);
 		frmGaharuGadingQr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmGaharuGadingQr.getContentPane().setLayout(new BorderLayout(0, 0));
-		frmGaharuGadingQr.setSize(new Dimension(640, 400));
+		frmGaharuGadingQr.setSize(new Dimension(800, 400));
+		frmGaharuGadingQr.setLocationRelativeTo(null);
 		
 		
 		JPanel panelLeft = new JPanel();

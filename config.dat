@@ -3,5 +3,6 @@
     <urls>
         <url>http://swopt.crazytech.co/qr.php</url>
         <url>http://localhost/qr.php</url>
+        <url>http://swopt.crazytech.co:8080/qr.php</url>
     </urls>
 </AppConfig>
