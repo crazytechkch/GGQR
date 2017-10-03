@@ -89,7 +89,7 @@ public class Main {
 	private JRadioButton rdbtnNew,rdbtnExisting;
 	private String qrDir;
 	private AppConfig config;
-	private static final String GG_WEB_DIR = "http://swopt.gaharu.co/gga/";
+	private static final String GG_WEB_DIR = "http://swopt.gaharu.co:8080/gga/";
 	private static final int AGROASS_TREE = 0xA01;
 	private static final int AGROASS_HIVE = 0xA02;
 	private JFormattedTextField textFieldStart;
